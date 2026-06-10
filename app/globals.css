@@ -103,6 +103,17 @@
       linear-gradient(to bottom, rgba(184, 200, 176, 0.15) 1px, transparent 1px);
   }
 
+  /* Dotted paper pattern (Dot Grid) */
+  .dot-grid-lines {
+    background-size: 20px 20px;
+    background-image: radial-gradient(rgba(184, 200, 176, 0.3) 1.5px, transparent 1.5px);
+  }
+
+  /* Dotted square grid pattern */
+  .dotted-grid-lines {
+    background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 20 0 L 0 0 0 20' fill='none' stroke='rgba(184%2C 200%2C 176%2C 0.3)' stroke-width='1' stroke-dasharray='1%2C3'/%3E%3C/svg%3E");
+  }
+
   /* Cozy shadows */
   .shadow-scrapbook-sm {
     box-shadow: 2px 2px 8px rgba(47, 47, 47, 0.06);
@@ -177,7 +188,7 @@
     transition: background-size 0.45s cubic-bezier(0.25, 1, 0.5, 1);
   }
   .pen-underline:hover {
-    background-size: 50% 2px, 50% 2px;
+    background-size: 55% 2px, 55% 2px;
   }
 
   /* Scrapbook transition defaults */

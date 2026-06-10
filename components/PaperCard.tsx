@@ -4,7 +4,7 @@ import { PaperclipDoodle, PushPin } from "./ScrapbookDoodles";
 
 interface PaperCardProps {
   children: React.ReactNode;
-  variant?: "default" | "grid" | "ruled" | "polaroid" | "sticky-yellow" | "sticky-green" | "sticky-blue" | "sticky-pink";
+  variant?: string | string[];
   rotation?: "none" | "rotate-1" | "-rotate-1" | "rotate-2" | "-rotate-2" | "rotate-3" | "-rotate-3";
   tape?: "none" | "top" | "top-left" | "top-right" | "both";
   tapeColor?: "pink" | "sage" | "teal";
@@ -48,14 +48,37 @@ export const PaperCard: React.FC<PaperCardProps> = ({
   // Card variant base classes
   const variantStyles = {
     default: "bg-white border border-[#E6E2D8] text-charcoal",
-    grid: "bg-white grid-lines border border-[#D5D0C2] text-charcoal",
-    ruled: "bg-[#FCFAF2] ruled-lines border border-[#E6E2D8] text-charcoal",
+    grid: "grid-lines border-[#D5D0C2]",
+    ruled: "ruled-lines",
+    dotted: "dot-grid-lines",
+    "dotted-squared": "dotted-grid-lines",
     polaroid: "bg-white border border-[#E0DBCF] p-4 pb-12 shadow-scrapbook-md text-charcoal",
     "sticky-yellow": "bg-[#FAF0D7] shadow-scrapbook-sm text-charcoal border-b border-r border-[#E6DBBE]",
     "sticky-green": "bg-[#E1EEDD] shadow-scrapbook-sm text-charcoal border-b border-r border-[#CDDBC8]",
     "sticky-blue": "bg-[#D8D9CF] shadow-scrapbook-sm text-charcoal border-b border-r border-[#C4C5BC]",
     "sticky-pink": "bg-[#F3E8EE] shadow-scrapbook-sm text-charcoal border-b border-r border-[#DFD1DA]",
   };
+
+  // Parse variants array
+  const variantsArray = Array.isArray(variant)
+    ? variant
+    : typeof variant === "string"
+      ? variant.split(" ")
+      : ["default"];
+
+  // If there's no base layout variant specified, mix-in the default base styles
+  const hasBaseVariant = variantsArray.some((v) =>
+    ["default", "polaroid", "sticky-yellow", "sticky-green", "sticky-blue", "sticky-pink"].includes(v)
+  );
+
+  const finalVariantsArray = hasBaseVariant ? variantsArray : ["default", ...variantsArray];
+
+  const resolvedVariantClasses = finalVariantsArray
+    .map((v) => variantStyles[v as keyof typeof variantStyles] || "")
+    .filter(Boolean)
+    .join(" ");
+
+  const isPolaroid = finalVariantsArray.includes("polaroid");
 
   // Washi tape render helper
   const renderTape = (position: "left" | "right" | "center") => {
@@ -90,9 +113,9 @@ export const PaperCard: React.FC<PaperCardProps> = ({
   return (
     <div
       className={cn(
-        "relative transition-cozy hover:-translate-y-[6px] hover:shadow-scrapbook-lg shadow-scrapbook-md rounded-sm",
+        "relative transition-cozy hover:translate-y-[-6px] hover:shadow-scrapbook-lg shadow-scrapbook-md rounded-sm",
         rotationClasses[rotation],
-        variantStyles[variant],
+        resolvedVariantClasses,
         tornBottom && "clip-torn-bottom pb-8",
         className
       )}
@@ -128,7 +151,7 @@ export const PaperCard: React.FC<PaperCardProps> = ({
       )}
 
       {/* Card contents */}
-      <div className={cn("h-full w-full", variant === "polaroid" ? "" : "p-6")}>
+      <div className={cn("h-full w-full", isPolaroid ? "" : "p-6")}>
         {children}
       </div>
     </div>

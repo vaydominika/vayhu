@@ -48,13 +48,13 @@ export const Hero: React.FC<HeroProps> = ({
 
         {/* Title with Hand-drawn Underline */}
         <div 
-          className={`relative transition-all duration-800 ease-out delay-[100ms] transform ${
+          className={`relative transition-all duration-800 ease-out delay-100 transform ${
             isMounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
           }`}
         >
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-charcoal leading-none">
             Hi, I'm <span className="relative inline-block z-10">Domi!
-              <span className="absolute -bottom-2 md:-bottom-3 left-0 w-full -z-10 text-pink/50 animate-float-ambient">
+              <span className="absolute -bottom-2 md:-bottom-3 left-0 w-full -z-10 text-pink/50">
                 <UnderlineHighlight className="w-full h-4 md:h-6" />
               </span>
             </span>
@@ -63,7 +63,7 @@ export const Hero: React.FC<HeroProps> = ({
 
         {/* Subheading */}
         <h2 
-          className={`text-xl md:text-2xl font-serif text-charcoal/80 font-medium italic mt-2 transition-all duration-800 ease-out delay-[200ms] transform ${
+          className={`text-xl md:text-2xl font-serif text-charcoal/80 font-medium italic mt-2 transition-all duration-800 ease-out delay-200 transform ${
             isMounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
           }`}
         >
@@ -72,7 +72,7 @@ export const Hero: React.FC<HeroProps> = ({
 
         {/* Intro Description */}
         <p 
-          className={`max-w-xl text-base md:text-lg text-charcoal/80 leading-relaxed font-sans mt-2 transition-all duration-800 ease-out delay-[300ms] transform ${
+          className={`max-w-xl text-base md:text-lg text-charcoal/80 leading-relaxed font-sans mt-2 transition-all duration-800 ease-out delay-300 transform ${
             isMounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
           }`}
         >
@@ -81,7 +81,7 @@ export const Hero: React.FC<HeroProps> = ({
 
         {/* CTAs */}
         <div 
-          className={`flex flex-wrap items-center gap-4 mt-4 transition-all duration-800 ease-out delay-[400ms] transform ${
+          className={`flex flex-wrap items-center gap-4 mt-4 transition-all duration-800 ease-out delay-400 transform ${
             isMounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
           }`}
         >
@@ -104,7 +104,7 @@ export const Hero: React.FC<HeroProps> = ({
 
         {/* Small decorative doodles */}
         <div 
-          className={`hidden sm:flex items-center gap-8 mt-6 text-charcoal/40 transition-all duration-800 ease-out delay-[500ms] transform ${
+          className={`hidden sm:flex items-center gap-8 mt-6 text-charcoal/40 transition-all duration-800 ease-out delay-500 transform ${
             isMounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
           }`}
         >
@@ -212,7 +212,6 @@ export const Hero: React.FC<HeroProps> = ({
             transform: `translate(${mousePos.x * 2}px, ${mousePos.y * 2}px) rotate(-12deg)`
           }}
         >
-          <FlowerDoodle className="w-full h-full text-pink" />
         </div>
         <SparkleStar className="absolute top-[20%] right-[-10px] w-6 h-6 text-pink/60 animate-float-ambient" />
         <SparkleStar className="absolute bottom-[20%] left-[-15px] w-5 h-5 text-teal/80 animate-float-ambient-slow" />
@@ -220,7 +219,7 @@ export const Hero: React.FC<HeroProps> = ({
       </div>
 
       {/* Ripped Edge Divider */}
-      <div className="col-span-full w-screen relative left-1/2 right-1/2 -translate-x-1/2 h-12 md:h-20 mt-8 pointer-events-none select-none">
+      <div className="col-span-full w-screen relative left-1/2 right-1/2 -translate-x-1/2 h-12 md:h-20 mt-8 top-8 pointer-events-none select-none">
         <Image 
           src="/assets/bottom-ripped.png" 
           alt="Ripped paper divider"
