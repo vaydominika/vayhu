@@ -1,5 +1,5 @@
 import React from "react";
-import { Heart, Coffee, Code, Gamepad2 } from "lucide-react";
+import { Coffee, Code, Gamepad2 } from "lucide-react";
 import Image from "next/image";
 import { PaperCard } from "@/components/PaperCard";
 import { ScrollReveal, ScrollRevealItem } from "@/components/ScrollReveal";
@@ -79,7 +79,7 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
                   </p>
                   <div className="pt-4 flex items-center justify-between text-xs text-charcoal/40 font-mono">
                     <span>- Domi</span>
-                    <span className="flex items-center gap-1">:-) <Heart className="w-3 h-3 text-pink fill-pink animate-pulse" /></span>
+                    <span className="flex items-center gap-1">:-) <HeartDoodle className="w-3.5 h-3.5 text-pink animate-pulse" /></span>
                   </div>
                 </div>
               </PaperCard>

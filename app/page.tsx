@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Heart } from "lucide-react";
 import { Nav } from "@/components/sections/Nav";
 import { Hero } from "@/components/sections/Hero";
 import { About } from "@/components/sections/About";
 import { Projects } from "@/components/sections/Projects";
 import { Contact } from "@/components/sections/Contact";
+import { HeartDoodle } from "@/components/ScrapbookDoodles";
 
 export default function Home() {
   const [isMounted, setIsMounted] = useState(false);
@@ -67,7 +67,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="mt-auto border-t border-[#E6E2D8] bg-[#F3EFE6] px-6 py-6 md:px-12 flex flex-col sm:flex-row items-center justify-between text-xs font-mono text-charcoal/60 gap-4">
         <span>© {new Date().getFullYear()} Vay. Made with Next.js &amp; Tailwind.</span>
-        <span className="flex items-center gap-1">built with coffee, code, and care <Heart className="w-3 h-3 text-pink fill-pink animate-pulse" /></span>
+        <span className="flex items-center gap-1">built with coffee, code, and care <HeartDoodle className="w-3.5 h-3.5 text-pink animate-pulse" /></span>
       </footer>
 
     </div>

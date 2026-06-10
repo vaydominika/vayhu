@@ -1,9 +1,8 @@
 import React from "react";
 import Image from "next/image";
-import { ArrowRight, Heart } from "lucide-react";
 import { PaperCard } from "@/components/PaperCard";
 import { ScrollReveal, ScrollRevealItem } from "@/components/ScrollReveal";
-import { LeafDoodle, FlowerDoodle } from "@/components/ScrapbookDoodles";
+import { LeafDoodle, FlowerDoodle, ArrowRightDoodle, HeartDoodle } from "@/components/ScrapbookDoodles";
 
 interface ProjectsProps {
   scrollTo: (id: string) => void;
@@ -21,7 +20,7 @@ export const Projects: React.FC<ProjectsProps> = ({ scrollTo }) => {
             className="inline-flex items-center gap-1.5 text-sm font-medium hover:text-pink btn-transition cursor-pointer group px-4 py-2 bg-white rounded-full border border-charcoal/10 shadow-scrapbook-sm hover:-translate-y-0.5"
           >
             <span>See all projects</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-500" />
+            <ArrowRightDoodle className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-500" />
           </button>
         </div>
 
@@ -37,8 +36,17 @@ export const Projects: React.FC<ProjectsProps> = ({ scrollTo }) => {
               className="flex-1 flex flex-col justify-between pt-12"
             >
               {/* Pink Projects Tab sitting inside the card to lift together */}
-              <div className="absolute -top-6 left-6 bg-pink text-charcoal rounded px-6 py-2 font-serif font-bold text-lg rotate-[-2.5deg] shadow-scrapbook-sm border border-[#CFA6B3] clip-torn-left z-30 select-none">
-                Projects
+              <div className="absolute -top-6 left-6 bg-pink text-charcoal rounded-r px-6 py-2 pl-8 font-serif font-bold text-lg rotate-[-2.5deg] shadow-scrapbook-sm border border-[#CFA6B3] z-30 select-none">
+                {/* paper-7 on the left side */}
+                <div className="absolute -left-6 top-1/2 -translate-y-1/2 w-11.5 h-6 z-10 pointer-events-none select-none -rotate-90">
+                  <Image 
+                    src="/assets/paper-7.png" 
+                    alt="Paper edge" 
+                    fill 
+                    className="object-cover"
+                  />
+                </div>
+                <span className="relative z-20">Projects</span>
               </div>
               {/* Pink tape piece holding the projects tab inside card to lift together */}
               <div className="absolute top-8 left-[95px] w-40 h-9 z-40 rotate-6 pointer-events-none select-none">
@@ -63,7 +71,7 @@ export const Projects: React.FC<ProjectsProps> = ({ scrollTo }) => {
                 <div>
                   <h4 className="font-serif text-lg font-bold text-charcoal flex items-center justify-between">
                     <span>Bookish Haven</span>
-                    <Heart className="w-3.5 h-3.5 text-pink/40 hover:text-pink transition-colors animate-pulse" />
+                    <HeartDoodle className="w-3.5 h-3.5 text-pink/40 hover:text-pink transition-colors animate-pulse" />
                   </h4>
                   <p className="mt-1 text-xs md:text-sm text-charcoal/70 leading-relaxed font-sans">
                     A cozy book discovery platform with reviews, recommendations, and personal bookshelves.
@@ -87,7 +95,7 @@ export const Projects: React.FC<ProjectsProps> = ({ scrollTo }) => {
                     rel="noopener noreferrer"
                     className="p-1.5 bg-white border border-charcoal/10 rounded-full hover:bg-sage/20 hover:border-sage hover:text-sage hover:scale-105 active:scale-95 transition-all text-charcoal flex items-center justify-center shrink-0 shadow-sm cursor-pointer"
                   >
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <ArrowRightDoodle className="w-3.5 h-3.5" />
                   </a>
                 </div>
               </div>
@@ -163,7 +171,7 @@ export const Projects: React.FC<ProjectsProps> = ({ scrollTo }) => {
                     rel="noopener noreferrer"
                     className="p-1.5 bg-white border border-charcoal/10 rounded-full hover:bg-sage/20 hover:border-sage hover:text-sage hover:scale-105 active:scale-95 transition-all text-charcoal flex items-center justify-center shrink-0 shadow-sm cursor-pointer"
                   >
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <ArrowRightDoodle className="w-3.5 h-3.5" />
                   </a>
                 </div>
               </div>
@@ -231,7 +239,7 @@ export const Projects: React.FC<ProjectsProps> = ({ scrollTo }) => {
                     rel="noopener noreferrer"
                     className="p-1.5 bg-white border border-charcoal/10 rounded-full hover:bg-sage/20 hover:border-sage hover:text-sage hover:scale-105 active:scale-95 transition-all text-charcoal flex items-center justify-center shrink-0 shadow-sm cursor-pointer"
                   >
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <ArrowRightDoodle className="w-3.5 h-3.5" />
                   </a>
                 </div>
               </div>

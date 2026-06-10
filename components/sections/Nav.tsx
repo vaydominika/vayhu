@@ -1,6 +1,4 @@
 import React from "react";
-import { Heart } from "lucide-react";
-import { FlowerDoodle } from "@/components/ScrapbookDoodles";
 
 interface NavProps {
   scrollTo: (id: string) => void;

@@ -1,13 +1,14 @@
 import React from "react";
 import Image from "next/image";
-import { Sparkles, ArrowRight, Heart } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { PaperCard } from "@/components/PaperCard";
 import { 
   UnderlineHighlight, 
   LeafDoodle, 
   SparkleStar, 
   HeartDoodle, 
-  FlowerDoodle 
+  FlowerDoodle,
+  ArrowRightDoodle
 } from "@/components/ScrapbookDoodles";
 
 interface HeroProps {
@@ -87,10 +88,10 @@ export const Hero: React.FC<HeroProps> = ({
         >
           <button
             onClick={() => scrollTo("projects")}
-            className="inline-flex items-center gap-2 bg-sage hover:bg-sage/90 hover:-translate-y-0.5 hover:scale-105 active:scale-95 text-charcoal font-semibold px-6 py-3 rounded-full shadow-scrapbook-md hover:shadow-scrapbook-lg btn-transition text-sm border border-emerald-800/20 cursor-pointer"
+            className="group inline-flex items-center gap-2 bg-sage hover:bg-sage/90 hover:-translate-y-0.5 hover:scale-105 active:scale-95 text-charcoal font-semibold px-6 py-3 rounded-full shadow-scrapbook-md hover:shadow-scrapbook-lg btn-transition text-sm border border-emerald-800/20 cursor-pointer"
           >
             <span>View my projects</span>
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRightDoodle className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
           </button>
           
           <button
@@ -98,7 +99,7 @@ export const Hero: React.FC<HeroProps> = ({
             className="inline-flex items-center gap-2 bg-white hover:bg-pink/10 hover:-translate-y-0.5 hover:scale-105 active:scale-95 text-charcoal font-semibold px-6 py-3 rounded-full border border-pink/60 shadow-scrapbook-sm hover:shadow-scrapbook-md btn-transition text-sm cursor-pointer"
           >
             <span>About me</span>
-            <Heart className="w-4 h-4 text-pink" />
+            <HeartDoodle className="w-4 h-4 text-pink" />
           </button>
         </div>
 

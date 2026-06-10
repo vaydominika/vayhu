@@ -1,12 +1,14 @@
 import React from "react";
-import { Heart, ArrowRight, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
 import { PaperCard } from "@/components/PaperCard";
 import { ScrollReveal, ScrollRevealItem } from "@/components/ScrollReveal";
 import { 
   GithubIcon, 
   LinkedinIcon, 
   EnvelopeDoodle, 
-  SparkleStar 
+  SparkleStar,
+  HeartDoodle,
+  ArrowRightDoodle
 } from "@/components/ScrapbookDoodles";
 
 export const Contact: React.FC = () => {
@@ -29,7 +31,7 @@ export const Contact: React.FC = () => {
               </h3>
               <p className="max-w-md text-sm md:text-base text-charcoal/80 leading-relaxed font-sans">
                 I'm currently open to new opportunities and exciting projects. Let's build something amazing!
-                <Heart className="w-3.5 h-3.5 text-pink fill-pink inline-block ml-1 animate-pulse" />
+                <HeartDoodle className="w-3.5 h-3.5 text-pink inline-block ml-1 animate-pulse" />
               </p>
               
               {/* CTA Form Button */}
@@ -39,7 +41,7 @@ export const Contact: React.FC = () => {
                   className="inline-flex items-center gap-2 bg-pink hover:bg-pink/90 hover:-translate-y-0.5 hover:scale-105 active:scale-95 text-charcoal font-semibold px-6 py-3 rounded-full shadow-scrapbook-md hover:shadow-scrapbook-lg btn-transition text-sm border border-pink/10"
                 >
                   <span>Get in touch</span>
-                  <ArrowRight className="w-4 h-4 animate-pulse" />
+                  <ArrowRightDoodle className="w-4 h-4 animate-pulse" />
                 </a>
               </div>
 
