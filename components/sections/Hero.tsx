@@ -2,14 +2,36 @@ import React from "react";
 import Image from "next/image";
 import { Sparkles } from "lucide-react";
 import { PaperCard } from "@/components/PaperCard";
-import { 
-  UnderlineHighlight, 
-  LeafDoodle, 
-  SparkleStar, 
-  HeartDoodle, 
-  FlowerDoodle,
-  ArrowRightDoodle
-} from "@/components/ScrapbookDoodles";
+import { Doodle } from "@/components/ui/Doodle";
+
+const UnderlineHighlight = ({ className = "w-full h-3 text-pink/40" }: { className?: string }) => (
+  <svg
+    viewBox="0 0 300 20"
+    preserveAspectRatio="none"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="10"
+    strokeLinecap="round"
+    className={className}
+  >
+    <path d="M5 10 C50 7 120 13 295 10 M30 14 C100 11 200 13 270 12" />
+  </svg>
+);
+
+const ArrowRightIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M4.25418 12.8823C4.17563 12.8438 3.9312 12.7681 4.01849 12.7652C5.15538 12.723 6.29299 12.7652 7.43061 12.7652C8.33256 12.7652 9.23453 12.7652 10.1365 12.7652C13.3202 12.7652 16.4858 12.6474 19.6659 12.6474" />
+    <path d="M14.4888 7C15.8643 7 16.6462 8.42058 17.6653 9.23597C20.6337 11.6101 21.1007 11.6996 18.6065 14.6477C17.8631 15.5256 16.9946 16.2486 16.1356 17" />
+  </svg>
+);
 
 interface HeroProps {
   isMounted: boolean;
@@ -33,6 +55,12 @@ export const Hero: React.FC<HeroProps> = ({
       onMouseLeave={handleMouseLeave}
       className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center pt-4 md:pt-10 scroll-mt-24 relative isolate before:absolute before:-top-10 before:bottom-8 md:before:bottom-12 before:left-1/2 before:-translate-x-1/2 before:w-screen before:bg-white before:-z-10"
     >
+      {/* Background doodles */}
+      <Doodle 
+        src="/assets/shine-1.svg" 
+        className="absolute left-[10%] top-[10%] w-36 h-36 opacity-15 rotate-12 -z-20 pointer-events-none select-none animate-float-ambient" 
+        color="bg-sage" 
+      />
       
       {/* Hero Left Content */}
       <div className="lg:col-span-7 flex flex-col gap-6 items-start">
@@ -91,7 +119,7 @@ export const Hero: React.FC<HeroProps> = ({
             className="group inline-flex items-center gap-2 bg-sage hover:bg-sage/90 hover:-translate-y-0.5 hover:scale-105 active:scale-95 text-charcoal font-semibold px-6 py-3 rounded-full shadow-scrapbook-md hover:shadow-scrapbook-lg btn-transition text-sm border border-emerald-800/20 cursor-pointer"
           >
             <span>View my projects</span>
-            <ArrowRightDoodle className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+            <ArrowRightIcon className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
           </button>
           
           <button
@@ -99,7 +127,7 @@ export const Hero: React.FC<HeroProps> = ({
             className="inline-flex items-center gap-2 bg-white hover:bg-pink/10 hover:-translate-y-0.5 hover:scale-105 active:scale-95 text-charcoal font-semibold px-6 py-3 rounded-full border border-pink/60 shadow-scrapbook-sm hover:shadow-scrapbook-md btn-transition text-sm cursor-pointer"
           >
             <span>About me</span>
-            <HeartDoodle className="w-4 h-4 text-pink" />
+            <Doodle src="/assets/heart-1.svg" className="w-4 h-4" color="bg-pink" />
           </button>
         </div>
 
@@ -109,8 +137,12 @@ export const Hero: React.FC<HeroProps> = ({
             isMounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
           }`}
         >
-          <span className="flex items-center gap-1 text-xs font-mono"><LeafDoodle className="w-5 h-5 text-sage animate-float-ambient" /> designer mindset</span>
-          <span className="flex items-center gap-1 text-xs font-mono"><SparkleStar className="w-4 h-4 text-pink animate-float-ambient-slow" /> developer skills</span>
+          <span className="flex items-center gap-1.5 text-xs font-mono">
+            <Doodle src="/assets/leaf-1.svg" className="w-5 h-5 animate-float-ambient" color="bg-sage" /> designer mindset
+          </span>
+          <span className="flex items-center gap-1.5 text-xs font-mono">
+            <Doodle src="/assets/star-1.svg" className="w-4 h-4 animate-float-ambient-slow" color="bg-pink" /> developer skills
+          </span>
         </div>
 
       </div>
@@ -189,12 +221,12 @@ export const Hero: React.FC<HeroProps> = ({
             rotation="none" 
             className="w-[120px] h-[120px] text-center border-b-2 border-r-2"
           >
-            <div className="font-serif text-xs font-semibold leading-relaxed flex flex-col gap-1 text-charcoal/90">
+            <div className="font-serif text-xs font-semibold leading-relaxed flex flex-col gap-1 text-charcoal/90 animate-fade-in">
               <span className="block">coffee</span>
               <span className="block">code</span>
               <span className="block">creativity</span>
             </div>
-            <HeartDoodle className="w-4 h-4 text-pink/70 mx-auto animate-float-ambient" />
+            <Doodle src="/assets/heart-2.svg" className="w-4 h-4 mx-auto animate-float-ambient" color="bg-pink/70" />
           </PaperCard>
         </div>
 
@@ -205,7 +237,7 @@ export const Hero: React.FC<HeroProps> = ({
             transform: `translate(${mousePos.x * 3}px, ${mousePos.y * 3}px) rotate(45deg)`
           }}
         >
-          <LeafDoodle className="w-full h-full text-sage" />
+          <Doodle src="/assets/leaf-2.svg" className="w-full h-full" color="bg-sage" />
         </div>
         <div 
           className="absolute bottom-6 -left-10 w-12 h-12 select-none pointer-events-none animate-float-ambient"
@@ -213,9 +245,11 @@ export const Hero: React.FC<HeroProps> = ({
             transform: `translate(${mousePos.x * 2}px, ${mousePos.y * 2}px) rotate(-12deg)`
           }}
         >
+          <Doodle src="/assets/strawberry-1.svg" className="w-full h-full" color="bg-pink/80" />
         </div>
-        <SparkleStar className="absolute top-[20%] right-[-10px] w-6 h-6 text-pink/60 animate-float-ambient" />
-        <SparkleStar className="absolute bottom-[20%] left-[-15px] w-5 h-5 text-teal/80 animate-float-ambient-slow" />
+        
+        <Doodle src="/assets/shine-2.svg" className="absolute top-[20%] right-[-10px] w-6 h-6 animate-float-ambient" color="bg-pink/60" />
+        <Doodle src="/assets/star-5.svg" className="absolute bottom-[20%] left-[-15px] w-5 h-5 animate-float-ambient-slow" color="bg-teal/80" />
 
       </div>
 

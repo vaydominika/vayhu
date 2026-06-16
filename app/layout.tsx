@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Quicksand } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
 const serifFont = Fraunces({
@@ -11,6 +12,12 @@ const serifFont = Fraunces({
 const sansFont = Quicksand({
   variable: "--font-sans",
   subsets: ["latin"],
+  display: "swap",
+});
+
+const handwritingFont = localFont({
+  src: "../public/fonts/Domi.ttf",
+  variable: "--font-handwriting",
   display: "swap",
 });
 
@@ -27,7 +34,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${serifFont.variable} ${sansFont.variable} h-full antialiased`}
+      className={`${serifFont.variable} ${sansFont.variable} ${handwritingFont.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
