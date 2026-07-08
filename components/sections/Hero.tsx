@@ -58,7 +58,7 @@ export const Hero: React.FC<HeroProps> = ({
       {/* Background doodles */}
       <Doodle 
         src="/assets/shine-1.svg" 
-        className="absolute left-[10%] top-[10%] w-36 h-36 opacity-15 rotate-12 -z-20 pointer-events-none select-none animate-float-ambient" 
+        className="absolute left-[10%] top-[10%] w-36 h-36 opacity-15 rotate-12 -z-20 pointer-events-none select-none" 
         color="bg-sage" 
       />
       
@@ -116,7 +116,7 @@ export const Hero: React.FC<HeroProps> = ({
         >
           <button
             onClick={() => scrollTo("projects")}
-            className="group inline-flex items-center gap-2 bg-sage hover:bg-sage/90 hover:-translate-y-0.5 hover:scale-105 active:scale-95 text-charcoal font-semibold px-6 py-3 rounded-full shadow-scrapbook-md hover:shadow-scrapbook-lg btn-transition text-sm border border-emerald-800/20 cursor-pointer"
+            className="group inline-flex items-center gap-2 bg-sage hover:bg-sage/90 hover:-translate-y-0.5 hover:scale-105 active:scale-95 text-charcoal font-semibold px-6 py-3 rounded-none shadow-scrapbook-md hover:shadow-scrapbook-lg btn-transition text-sm border border-emerald-800/20 cursor-pointer"
           >
             <span>View my projects</span>
             <ArrowRightIcon className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
@@ -124,7 +124,7 @@ export const Hero: React.FC<HeroProps> = ({
           
           <button
             onClick={() => scrollTo("about")}
-            className="inline-flex items-center gap-2 bg-white hover:bg-pink/10 hover:-translate-y-0.5 hover:scale-105 active:scale-95 text-charcoal font-semibold px-6 py-3 rounded-full border border-pink/60 shadow-scrapbook-sm hover:shadow-scrapbook-md btn-transition text-sm cursor-pointer"
+            className="inline-flex items-center gap-2 bg-white hover:bg-pink/10 hover:-translate-y-0.5 hover:scale-105 active:scale-95 text-charcoal font-semibold px-6 py-3 rounded-none border border-pink/60 shadow-scrapbook-sm hover:shadow-scrapbook-md btn-transition text-sm cursor-pointer"
           >
             <span>About me</span>
             <Doodle src="/assets/heart-1.svg" className="w-4 h-4" color="bg-pink" />
@@ -203,15 +203,12 @@ export const Hero: React.FC<HeroProps> = ({
                 priority
               />
             </div>
-            <div className="mt-4 font-serif text-center text-sm font-medium italic text-charcoal/80">
-              learning by coding &amp; designing ✨
-            </div>
           </PaperCard>
         </div>
 
         {/* Yellow Sticky Note layered on the bottom right corner */}
         <div
-          className="absolute bottom-2 sm:right-[2px] z-20 transition-cozy group-hover/collage:-translate-y-2 group-hover/collage:rotate-6"
+          className="absolute bottom-3 right-0 sm:right-[2px] z-20 transition-cozy group-hover/collage:-translate-y-2 group-hover/collage:rotate-6"
           style={{
             transform: `translate(${mousePos.x * 9}px, ${mousePos.y * 9}px) rotate(3deg)`
           }}
@@ -219,12 +216,10 @@ export const Hero: React.FC<HeroProps> = ({
           <PaperCard 
             variant="sticky-yellow" 
             rotation="none" 
-            className="w-[120px] h-[120px] text-center border-b-2 border-r-2"
+            className="w-24 h-24 sm:w-[120px] sm:h-[120px] text-center border-b-2 border-r-2"
           >
-            <div className="font-serif text-xs font-semibold leading-relaxed flex flex-col gap-1 text-charcoal/90 animate-fade-in">
-              <span className="block">coffee</span>
-              <span className="block">code</span>
-              <span className="block">creativity</span>
+            <div className="font-serif text-sm sm:text-base font-semibold leading-relaxed text-charcoal/90 animate-fade-in">
+              welcome!
             </div>
             <Doodle src="/assets/heart-2.svg" className="w-4 h-4 mx-auto animate-float-ambient" color="bg-pink/70" />
           </PaperCard>
@@ -254,7 +249,7 @@ export const Hero: React.FC<HeroProps> = ({
       </div>
 
       {/* Ripped Edge Divider */}
-      <div className="col-span-full w-screen relative left-1/2 right-1/2 -translate-x-1/2 h-12 md:h-20 mt-8 top-8 pointer-events-none select-none">
+      <div className="col-span-full w-screen relative left-1/2 right-1/2 -translate-x-1/2 h-12 md:h-20 mt-2 md:mt-8 top-0 md:top-8 pointer-events-none select-none">
         <Image 
           src="/assets/bottom-ripped.png" 
           alt="Ripped paper divider"

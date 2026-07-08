@@ -34,9 +34,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${serifFont.variable} ${sansFont.variable} ${handwritingFont.variable} h-full antialiased`}
+      className={`${serifFont.variable} ${sansFont.variable} ${handwritingFont.variable} h-full antialiased overflow-x-hidden`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col overflow-x-hidden w-full">{children}</body>
     </html>
   );
 }

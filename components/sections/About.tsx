@@ -16,8 +16,33 @@ const getHoverClass = (index: number) => {
   return `${rotations[index % rotations.length]} ${translates[(index + 2) % translates.length]}`;
 };
 
+const getDurationText = (start: Date, end: Date) => {
+  let months = (end.getFullYear() - start.getFullYear()) * 12 + end.getMonth() - start.getMonth();
+
+  if (end.getDate() < start.getDate()) {
+    months -= 1;
+  }
+
+  months = Math.max(months, 0);
+
+  const years = Math.floor(months / 12);
+  const remainingMonths = months % 12;
+  const parts = [];
+
+  if (years > 0) {
+    parts.push(`${years} ${years === 1 ? "year" : "years"}`);
+  }
+
+  if (remainingMonths > 0) {
+    parts.push(`${remainingMonths} ${remainingMonths === 1 ? "month" : "months"}`);
+  }
+
+  return parts.length > 0 ? parts.join(" ") : "Less than 1 month";
+};
+
 export const About: React.FC<AboutProps> = ({ scrollTo }) => {
   const [mousePos, setMousePos] = React.useState({ x: 0, y: 0 });
+  const [today, setToday] = React.useState<Date | null>(null);
 
   // State to hold current hover animation class for each of the 4 sticky notes
   const [cardHovers, setCardHovers] = React.useState<{ [key: number]: string }>({
@@ -58,6 +83,10 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
     setMousePos({ x: 0, y: 0 });
   };
 
+  React.useEffect(() => {
+    setToday(new Date());
+  }, []);
+
   return (
     <section 
       id="about" 
@@ -66,23 +95,33 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
       {/* Background doodles - made significantly more visible */}
       <Doodle 
         src="/assets/spiral-1.svg" 
-        className="absolute -left-12 top-10 w-32 h-32 opacity-65 rotate-12 -z-10 pointer-events-none select-none animate-float-ambient" 
+        className="absolute -left-12 top-10 w-32 h-32 opacity-65 rotate-12 -z-10 pointer-events-none select-none" 
         color="bg-teal/70" 
       />
       <Doodle 
         src="/assets/star-6.svg" 
-        className="absolute right-12 top-0 w-16 h-16 opacity-75 -rotate-12 -z-10 pointer-events-none select-none animate-float-ambient-slow" 
+        className="absolute right-12 top-0 w-16 h-16 opacity-75 -rotate-12 -z-10 pointer-events-none select-none" 
         color="bg-pink" 
       />
       <Doodle 
         src="/assets/star-7.svg" 
-        className="absolute left-1/3 bottom-12 w-20 h-20 opacity-65 rotate-45 -z-10 pointer-events-none select-none animate-float-ambient" 
+        className="absolute left-1/3 bottom-12 w-20 h-20 opacity-65 rotate-45 -z-10 pointer-events-none select-none" 
         color="bg-sage/80" 
       />
       <Doodle 
         src="/assets/strawberry-2.svg" 
-        className="absolute right-1/4 bottom-4 w-12 h-12 opacity-80 -z-10 pointer-events-none select-none animate-pulse" 
+        className="absolute right-1/4 bottom-4 w-12 h-12 opacity-80 -z-10 pointer-events-none select-none" 
         color="bg-pink" 
+      />
+      <Doodle
+        src="/assets/shine-1.svg"
+        className="absolute left-[8%] bottom-1/3 w-14 h-14 opacity-45 -rotate-12 -z-10 pointer-events-none select-none"
+        color="bg-pink/70"
+      />
+      <Doodle
+        src="/assets/leaf-1.svg"
+        className="absolute right-[7%] bottom-24 w-16 h-16 opacity-45 rotate-45 -z-10 pointer-events-none select-none"
+        color="bg-sage"
       />
 
       <ScrollReveal>
@@ -91,7 +130,7 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
           {/* About Card Left */}
           <ScrollRevealItem 
             delay={0} 
-            className="lg:col-span-5 relative mt-4 group/aboutcard flex flex-col h-full"
+            className="lg:col-span-6 relative mt-4 group/aboutcard flex flex-col h-full"
           >
             <div
               className="w-full h-full relative flex flex-col"
@@ -141,10 +180,10 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
               <PaperCard variant="ruled" rotation="none" className="p-1 h-full pt-8">
                 <div className="space-y-4 font-handwriting text-2xl md:text-2xl font-bold text-charcoal/90 leading-relaxed tracking-tighter mt-4">
                   <p>
-                    I'm a frontend developer who loves turning ideas into beautiful, functional web experiences.
+                    Hi! I'm Dominika, a full-stack developer who loves building beautiful, functional web experiences with clean, thoughtful design.
                   </p>
                   <p>
-                    When I'm not coding, you can usually find me sipping tea or an energy drink, getting lost in a good book, watching anime, gaming, or exploring new places and designs.
+                    When I'm not coding, I'm usually reading, watching anime, gaming, drinking tea or an energy drink, or finding inspiration in pretty palettes, layouts, new places, and tiny design details.
                   </p>
                   <div className="pt-4 flex items-center justify-between text-xl text-charcoal/40 font-mono">
                     <span>- Domi</span>
@@ -160,34 +199,34 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
             
             <div onMouseEnter={() => handleCardMouseEnter(0)}>
               <PaperCard variant="sticky-pink ruled" dense={true} lineColor="#E5CBD6" rotation="rotate-2" className={cn("h-28 w-28 flex flex-col justify-center items-center text-center p-4 relative overflow-visible mx-auto", cardHovers[0])}>
-                <span className="text-xl md:text-2xl font-handwriting font-bold tracking-tighter leading-snug">caffeine fueled</span>
+                <span className="text-xl md:text-2xl font-handwriting font-bold tracking-tighter leading-snug">css survivor</span>
                 <Doodle src="/assets/star-2.svg" className="absolute -top-2.5 -right-2.5 w-6 h-6 rotate-12 z-20" color="bg-pink" />
               </PaperCard>
             </div>
             
             <div onMouseEnter={() => handleCardMouseEnter(1)}>
               <PaperCard variant="sticky-green grid" rotation="-rotate-3" className={cn("h-32 w-32 flex flex-col justify-center items-center text-center p-4 mx-auto", cardHovers[1])}>
-                <span className="text-xl md:text-2xl font-handwriting font-bold tracking-tighter leading-snug">always learning</span>
+                <span className="text-lg md:text-xl font-handwriting font-bold tracking-tighter leading-snug">overthinking specialist</span>
               </PaperCard>
             </div>
             
             <div onMouseEnter={() => handleCardMouseEnter(2)}>
               <PaperCard variant="sticky-blue" pushpin={true} rotation="-rotate-1" className={cn("h-30 w-30 flex flex-col justify-center items-center text-center p-4 mx-auto", cardHovers[2])}>
-                <span className="text-xl md:text-2xl font-handwriting font-bold tracking-tighter leading-snug">pixel perfectionist</span>
+                <span className="text-xl md:text-2xl font-handwriting font-bold tracking-tighter leading-snug">99% caffeine</span>
               </PaperCard>
             </div>
             
             <div onMouseEnter={() => handleCardMouseEnter(3)}>
               <PaperCard variant="sticky-yellow" tornBottom={true} rotation="rotate-2" className={cn("h-34 w-30 flex flex-col justify-center items-center text-center p-4 relative mx-auto", cardHovers[3])}>
                 <Doodle src="/assets/strawberry-2.svg" className="absolute top-2 left-2 w-6 h-6 -rotate-12 z-20" color="bg-pink" />
-                <span className="text-xl md:text-2xl font-handwriting font-bold tracking-tighter leading-snug">cozy gamer</span>
+                <span className="text-xl md:text-2xl font-handwriting font-bold tracking-tighter leading-snug">commit &amp; cry</span>
               </PaperCard>
             </div>
 
           </ScrollRevealItem>
 
           {/* Skills Card Right */}
-          <ScrollRevealItem id="skills" delay={300} className="lg:col-span-4 scroll-mt-24 relative mt-4 flex flex-col h-full group/skillcard">
+          <ScrollRevealItem id="skills" delay={300} className="lg:col-span-3 scroll-mt-24 relative mt-4 flex flex-col h-full group/skillcard">
             
             <PaperCard variant="grid" paperclip={true} paperclipPosition="top-right" rotation="rotate-1" className="h-full pt-8 relative overflow-visible">
               {/* Scrapbook Tab Header using badge-2.svg */}
@@ -261,6 +300,102 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
           </ScrollRevealItem>
 
         </div>
+
+        <ScrollRevealItem delay={450} className="mt-8 relative group/experience">
+          <Doodle
+            src="/assets/spiral-2.svg"
+            className="absolute -left-10 top-5 h-24 w-24 -rotate-12 opacity-45 -z-10 pointer-events-none select-none"
+            color="bg-pink/70"
+          />
+          <Doodle
+            src="/assets/star-8.svg"
+            className="absolute -right-6 bottom-2 h-20 w-20 rotate-12 opacity-45 -z-10 pointer-events-none select-none"
+            color="bg-sage"
+          />
+          <Doodle
+            src="/assets/heart-1.svg"
+            className="absolute left-1/2 -bottom-8 h-10 w-10 -rotate-6 opacity-35 -z-10 pointer-events-none select-none"
+            color="bg-pink"
+          />
+          <PaperCard variant="dotted" rotation="-rotate-1" lineColor="rgba(175, 207, 201, 0.32)" className="relative overflow-visible p-6 md:p-7">
+            <div className="absolute -top-5 -left-5 h-9 w-28 -rotate-12 pointer-events-none select-none z-20">
+              <Image
+                src="/assets/tape-5.png"
+                alt="Tape"
+                fill
+                className="object-contain"
+              />
+            </div>
+            <div className="absolute -bottom-5 -right-5 h-9 w-28 rotate-12 pointer-events-none select-none z-20">
+              <Image
+                src="/assets/tape-2.png"
+                alt="Tape"
+                fill
+                className="object-contain"
+              />
+            </div>
+            <Doodle src="/assets/shine-2.svg" className="absolute -top-4 right-16 h-8 w-8 rotate-12 opacity-70" color="bg-teal" />
+            <div className="space-y-6">
+              <div className="flex flex-col gap-2 border-b border-charcoal/10 pb-4 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-charcoal/60">Work experience</p>
+                  <h3 className="mt-1 font-serif text-3xl font-bold leading-tight text-charcoal md:text-4xl">Where I&apos;ve worked</h3>
+                </div>
+                <Doodle src="/assets/star-6.svg" className="hidden h-7 w-7 rotate-12 md:block" color="bg-pink" />
+              </div>
+
+              <div className="grid flex-1 gap-4 md:grid-cols-2">
+                {[
+                  {
+                    period: "March 2025 - Present",
+                    duration: today ? getDurationText(new Date(2025, 2, 1), today) : "Current",
+                    title: "Full-stack Developer Intern",
+                    company: "Evosoft Hungary Kft.",
+                    text: "Working on full-stack development tasks and growing through real product experience."
+                  },
+                  {
+                    period: "March 2023 - March 2025",
+                    duration: getDurationText(new Date(2023, 2, 1), new Date(2025, 2, 1)),
+                    title: "Technical Call Center Agent",
+                    company: "Telekom",
+                    text: "Helped customers with technical questions and learned how to solve problems clearly under pressure."
+                  }
+                ].map((item, idx) => (
+                  <div
+                    key={item.title}
+                    className={cn(
+                      "relative bg-white/70 border border-charcoal/10 p-4 shadow-scrapbook-sm transition-cozy hover:-translate-y-1",
+                      idx === 0 && "-rotate-1",
+                      idx === 1 && "rotate-1"
+                    )}
+                  >
+                    <Doodle
+                      src={idx === 0 ? "/assets/star-2.svg" : "/assets/heart-2.svg"}
+                      className={cn(
+                        "absolute -right-2 -top-2 h-5 w-5 rotate-12",
+                        idx === 1 && "-rotate-12"
+                      )}
+                      color={idx === 0 ? "bg-pink" : "bg-sage"}
+                    />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className={cn(
+                        "inline-flex px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-charcoal/70 shadow-sm",
+                        idx === 0 && "bg-pink/45",
+                        idx === 1 && "bg-sage/55"
+                      )}>{item.period}</p>
+                      <p className="font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-charcoal/55">
+                        {item.duration}
+                      </p>
+                    </div>
+                    <h4 className="mt-3 font-serif text-xl font-bold leading-tight text-charcoal">{item.title}</h4>
+                    <p className="mt-1 font-sans text-sm font-bold text-charcoal/75">{item.company}</p>
+                    <p className="mt-3 max-w-sm text-sm leading-relaxed text-charcoal/80">{item.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </PaperCard>
+        </ScrollRevealItem>
       </ScrollReveal>
     </section>
   );

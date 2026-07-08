@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
+import { Image as ImageIcon } from "lucide-react";
 import { PaperCard } from "@/components/PaperCard";
 import { ScrollReveal, ScrollRevealItem } from "@/components/ScrollReveal";
 import { Doodle } from "@/components/ui/Doodle";
@@ -38,34 +39,29 @@ const ArrowLeftIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
 
 const projectList = [
   {
-    title: "Bookish Haven",
+    title: "Wally Walnut Walk",
+    url: "https://diodome.setaloja.hu",
     images: [
-      "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=1200&q=90",
-      "https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&w=1200&q=90",
-      "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=1200&q=90"
+      "/assets/wally-walnut-home.png",
+      "/assets/wally-walnut-chat.png"
     ]
   },
   {
-    title: "Focus Flow",
+    title: "Dialóg Egyesület",
+    url: "https://www.dialogegyesulet.hu",
     images: [
-      "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?auto=format&fit=crop&w=1200&q=90",
-      "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&w=1200&q=90",
-      "https://images.unsplash.com/photo-1488998427799-e3362cec87c3?auto=format&fit=crop&w=1200&q=90"
+      "/assets/dialog-home-v2.png",
+      "/assets/dialog-team-v2.png"
     ]
   },
   {
-    title: "Clay & Craft",
+    title: "Herman Ottó Museum - Game",
+    url: "https://hermuz.maty.as",
     images: [
-      "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1200&q=90",
-      "https://images.unsplash.com/photo-1576016770956-debb63d90029?auto=format&fit=crop&w=1200&q=90",
-      "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=1200&q=90"
+      "/assets/herman-museum-game.png"
     ]
   }
 ];
-
-interface ProjectsProps {
-  scrollTo: (id: string) => void;
-}
 
 const HOVER_COLORS = [
   { bg: "hover:bg-pink/20", border: "hover:border-pink", text: "hover:text-pink" },
@@ -81,7 +77,7 @@ const TRANSITION_ANIMATIONS = [
   "animate-paper-bounce"
 ];
 
-export const Projects: React.FC<ProjectsProps> = ({ scrollTo }) => {
+export const Projects: React.FC = () => {
   const [lightbox, setLightbox] = useState<{ isOpen: boolean; projectIndex: number; imageIndex: number }>({
     isOpen: false,
     projectIndex: 0,
@@ -159,35 +155,34 @@ export const Projects: React.FC<ProjectsProps> = ({ scrollTo }) => {
       {/* Background doodles - made significantly more visible */}
       <Doodle 
         src="/assets/spiral-2.svg" 
-        className="absolute -left-4 top-20 w-32 h-32 opacity-65 -rotate-45 -z-10 pointer-events-none select-none animate-float-ambient" 
+        className="absolute -left-4 top-20 w-32 h-32 opacity-65 -rotate-45 -z-10 pointer-events-none select-none" 
         color="bg-pink/80" 
       />
       <Doodle 
         src="/assets/star-9.svg" 
-        className="absolute right-4 top-1/2 w-32 h-32 opacity-60 rotate-12 -z-10 pointer-events-none select-none animate-float-ambient-slow" 
+        className="absolute right-4 top-1/2 w-32 h-32 opacity-60 rotate-12 -z-10 pointer-events-none select-none" 
         color="bg-teal" 
       />
       <Doodle 
         src="/assets/star-4.svg" 
-        className="absolute left-1/3 bottom-0 w-20 h-20 opacity-60 rotate-90 -z-10 pointer-events-none select-none animate-pulse" 
+        className="absolute left-1/3 bottom-0 w-20 h-20 opacity-60 rotate-90 -z-10 pointer-events-none select-none" 
         color="bg-sage" 
+      />
+      <Doodle
+        src="/assets/shine-3.svg"
+        className="absolute left-[12%] top-[55%] w-12 h-12 opacity-45 rotate-12 -z-10 pointer-events-none select-none"
+        color="bg-teal/80"
+      />
+      <Doodle
+        src="/assets/strawberry-2.svg"
+        className="absolute right-[18%] -bottom-8 w-14 h-14 opacity-50 -rotate-12 -z-10 pointer-events-none select-none"
+        color="bg-pink"
       />
 
       <ScrollReveal>
         
-        {/* Header row containing only action buttons now, since Title sits on the first card */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-end gap-4 mb-14 pt-4">
-          <button 
-            onClick={() => scrollTo("contact")}
-            className="inline-flex items-center gap-1.5 text-sm font-medium hover:text-pink btn-transition cursor-pointer group px-4 py-2 bg-white rounded-full border border-charcoal/10 shadow-scrapbook-sm hover:-translate-y-0.5"
-          >
-            <span>See all projects</span>
-            <ArrowRightIcon className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-500" />
-          </button>
-        </div>
-
         {/* Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 pt-4">
           
           {/* Project 1 with Projects Badge overlapping */}
           <ScrollRevealItem delay={0} className="flex flex-col h-full group relative pt-6">
@@ -198,17 +193,17 @@ export const Projects: React.FC<ProjectsProps> = ({ scrollTo }) => {
               className="flex-1 flex flex-col justify-between pt-12 relative overflow-visible"
             >
               {/* Projects Badge replacing the old Pink Projects Tab */}
-              <div className="absolute -top-14 left-2 w-32 h-32 z-30 select-none flex items-center justify-center rotate-[-6deg] drop-shadow-md transition-cozy group-hover:-translate-y-1">
+              <div className="absolute -top-24 left-0 w-44 h-44 z-30 select-none flex items-center justify-center rotate-[-6deg] drop-shadow-md transition-cozy group-hover:-translate-y-1">
                 <Doodle 
                   src="/assets/badge-1.svg" 
                   className="absolute inset-0 w-full h-full" 
                   color="bg-pink" 
                 />
-                <span className="relative z-10 font-serif font-bold text-lg text-charcoal pt-1 pr-1">Projects</span>
+                <span className="relative z-10 font-serif font-bold text-2xl text-charcoal pt-1 pr-1">Projects</span>
               </div>
               
               {/* Pink tape piece holding the projects tab inside card to lift together */}
-              <div className="absolute top-8 left-[95px] w-40 h-9 z-40 rotate-6 pointer-events-none select-none">
+              <div className="absolute top-7 left-[120px] w-44 h-10 z-40 rotate-6 pointer-events-none select-none">
                 <Image 
                   src="/assets/tape-2.png" 
                   alt="Tape" 
@@ -230,25 +225,29 @@ export const Projects: React.FC<ProjectsProps> = ({ scrollTo }) => {
               >
                 <Image 
                   src={projectList[0].images[0]} 
-                  alt="Bookish Haven Discovery platform" 
+                  alt="Wally Walnut Walk educational nature walk website" 
                   fill
                   sizes="(max-width: 768px) 100vw, 450px"
-                  className="object-cover transition-transform duration-750 ease-out hover:scale-103"
+                  className="object-contain transition-transform duration-750 ease-out hover:scale-103"
                 />
+                <div className="absolute bottom-2 right-2 inline-flex items-center gap-1 bg-white/85 backdrop-blur-xs px-2 py-0.5 rounded-sm border border-charcoal/10 font-handwriting text-sm text-charcoal/80 shadow-scrapbook-sm select-none pointer-events-none z-10">
+                  <ImageIcon className="h-3.5 w-3.5" />
+                  <span>{projectList[0].images.length}</span>
+                </div>
               </div>
               <div className="mt-2.5 flex flex-col gap-2">
                 <div>
                   <h4 className="font-serif text-lg font-bold text-charcoal flex items-center justify-between">
-                    <span>Bookish Haven</span>
-                    <Doodle src="/assets/heart-1.svg" className="w-3.5 h-3.5" color="bg-pink" />
+                    <span>Wally Walnut Walk</span>
+                    <Doodle src="/assets/leaf-2.svg" className="w-4 h-4 rotate-12" color="bg-teal" />
                   </h4>
                   <p className="mt-1 text-xs md:text-sm text-charcoal/70 leading-relaxed font-sans">
-                    A cozy book discovery platform with reviews, recommendations, and personal bookshelves.
+                    A story-based nature trail for families, with colorful stones, quiet rest stops, and gentle moments for slowing down together.
                   </p>
                 </div>
                 <div className="pt-2 border-t border-charcoal/5 flex items-center justify-between gap-4 w-full">
                   <div className="flex flex-wrap gap-1.5">
-                    {["Next.js", "Tailwind CSS", "TypeScript"].map((tag, idx) => (
+                    {["SolidJS", "Tailwind CSS"].map((tag, idx) => (
                       <span 
                         key={tag} 
                         style={{ transitionDelay: `${idx * 80}ms` }}
@@ -259,7 +258,7 @@ export const Projects: React.FC<ProjectsProps> = ({ scrollTo }) => {
                     ))}
                   </div>
                   <a 
-                    href="https://github.com"
+                    href={projectList[0].url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-1.5 bg-white border border-charcoal/10 rounded-full hover:bg-sage/20 hover:border-sage hover:text-sage hover:scale-105 active:scale-95 transition-all text-charcoal flex items-center justify-center shrink-0 shadow-sm cursor-pointer"
@@ -275,7 +274,7 @@ export const Projects: React.FC<ProjectsProps> = ({ scrollTo }) => {
           <ScrollRevealItem delay={150} className="flex flex-col h-full md:translate-y-4 group relative pt-6">
             
             {/* Blue card behind */}
-            <div className="absolute inset-y-12 left-1/2 translate-y-8 -translate-x-1/2 w-[98%] bg-teal/80 border border-[#9BBAB4]/50 shadow-scrapbook-sm rounded-sm z-0 rotate-1 transition-all duration-500 ease-in-out group-hover:translate-y-5 group-hover:rotate-2"></div>
+            <div className="absolute top-20 -bottom-px left-1/2 translate-y-8 -translate-x-1/2 w-[98%] bg-teal/80 border border-[#9BBAB4]/50 shadow-scrapbook-sm rounded-sm z-0 rotate-1 transition-all duration-500 ease-in-out group-hover:translate-y-5 group-hover:rotate-2 md:top-12 md:bottom-12 md:w-[98%]"></div>
 
             <PaperCard 
               variant="polaroid" 
@@ -320,25 +319,29 @@ export const Projects: React.FC<ProjectsProps> = ({ scrollTo }) => {
               >
                 <Image 
                   src={projectList[1].images[0]} 
-                  alt="Focus Flow app" 
+                  alt="Dialóg Egyesület website" 
                   fill
                   sizes="(max-width: 768px) 100vw, 450px"
-                  className="object-cover transition-transform duration-750 ease-out hover:scale-103"
+                  className="object-contain transition-transform duration-750 ease-out hover:scale-103"
                 />
+                <div className="absolute bottom-2 right-2 inline-flex items-center gap-1 bg-white/85 backdrop-blur-xs px-2 py-0.5 rounded-sm border border-charcoal/10 font-handwriting text-sm text-charcoal/80 shadow-scrapbook-sm select-none pointer-events-none z-10">
+                  <ImageIcon className="h-3.5 w-3.5" />
+                  <span>{projectList[1].images.length}</span>
+                </div>
               </div>
               <div className="mt-2.5 flex flex-col gap-2 z-10">
                 <div>
                   <h4 className="font-serif text-lg font-bold text-charcoal flex items-center justify-between">
-                    <span>Focus Flow</span>
-                    <span className="text-teal font-mono text-[10px]">🌱 grid</span>
+                    <span>Dialóg Egyesület</span>
+                    <Doodle src="/assets/strawberry-2.svg" className="w-4 h-4 -rotate-12" color="bg-pink" />
                   </h4>
                   <p className="mt-1 text-xs md:text-sm text-charcoal/70 leading-relaxed font-sans">
-                    A productivity app that helps you stay focused, track habits, and achieve your goals.
+                    A website presenting the association&apos;s work, programs, and ways to get involved.
                   </p>
                 </div>
                 <div className="pt-2 border-t border-charcoal/5 flex items-center justify-between gap-4 w-full">
                   <div className="flex flex-wrap gap-1.5">
-                    {["React", "TypeScript", "Chart.js"].map((tag, idx) => (
+                    {["Next.js", "C#", "Tailwind CSS"].map((tag, idx) => (
                       <span 
                         key={tag} 
                         style={{ transitionDelay: `${idx * 80}ms` }}
@@ -349,7 +352,7 @@ export const Projects: React.FC<ProjectsProps> = ({ scrollTo }) => {
                     ))}
                   </div>
                   <a 
-                    href="https://github.com"
+                    href={projectList[1].url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-1.5 bg-white border border-charcoal/10 rounded-full hover:bg-sage/20 hover:border-sage hover:text-sage hover:scale-105 active:scale-95 transition-all text-charcoal flex items-center justify-center shrink-0 shadow-sm cursor-pointer"
@@ -395,25 +398,29 @@ export const Projects: React.FC<ProjectsProps> = ({ scrollTo }) => {
               >
                 <Image 
                   src={projectList[2].images[0]} 
-                  alt="Clay & Craft Ceramics shop" 
+                  alt="Herman Ottó Museum investigation game" 
                   fill
                   sizes="(max-width: 768px) 100vw, 450px"
-                  className="object-cover transition-transform duration-750 ease-out hover:scale-103"
+                  className="object-contain transition-transform duration-750 ease-out hover:scale-103"
                 />
+                <div className="absolute bottom-2 right-2 inline-flex items-center gap-1 bg-white/85 backdrop-blur-xs px-2 py-0.5 rounded-sm border border-charcoal/10 font-handwriting text-sm text-charcoal/80 shadow-scrapbook-sm select-none pointer-events-none z-10">
+                  <ImageIcon className="h-3.5 w-3.5" />
+                  <span>{projectList[2].images.length}</span>
+                </div>
               </div>
               <div className="mt-2.5 flex flex-col gap-2">
                 <div>
                   <h4 className="font-serif text-lg font-bold text-charcoal flex items-center justify-between">
-                    <span>Clay &amp; Craft</span>
+                    <span>Herman Ottó Museum - Game</span>
                     <Doodle src="/assets/star-2.svg" className="w-3.5 h-3.5" color="bg-yellow-600 animate-pulse" />
                   </h4>
                   <p className="mt-1 text-xs md:text-sm text-charcoal/70 leading-relaxed font-sans">
-                    A handmade ceramics shop with a minimal, earthy design and smooth shopping experience.
+                    An investigation-style quiz game for the Herman Ottó Museum in Miskolc, turning the museum visit into a playful discovery experience.
                   </p>
                 </div>
                 <div className="pt-2 border-t border-charcoal/5 flex items-center justify-between gap-4 w-full">
                   <div className="flex flex-wrap gap-1.5">
-                    {["Next.js", "Tailwind CSS", "Stripe"].map((tag, idx) => (
+                    {["Next.js", "Tailwind CSS"].map((tag, idx) => (
                       <span 
                         key={tag} 
                         style={{ transitionDelay: `${idx * 80}ms` }}
@@ -424,7 +431,7 @@ export const Projects: React.FC<ProjectsProps> = ({ scrollTo }) => {
                     ))}
                   </div>
                   <a 
-                    href="https://github.com"
+                    href={projectList[2].url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-1.5 bg-white border border-charcoal/10 rounded-full hover:bg-sage/20 hover:border-sage hover:text-sage hover:scale-105 active:scale-95 transition-all text-charcoal flex items-center justify-center shrink-0 shadow-sm cursor-pointer"
@@ -478,7 +485,7 @@ export const Projects: React.FC<ProjectsProps> = ({ scrollTo }) => {
                   src={projectList[lightbox.projectIndex].images[lightbox.imageIndex]} 
                   alt={projectList[lightbox.projectIndex].title} 
                   fill 
-                  className="object-cover"
+                  className="object-contain"
                   priority
                 />
               </div>

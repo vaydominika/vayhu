@@ -36,12 +36,13 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-offwhite text-charcoal paper-grain flex flex-col font-sans">
-      
+    <>
       {/* Navigation Header */}
       <Nav scrollTo={scrollTo} />
 
-      {/* Main Container */}
+      <div className="min-h-screen bg-offwhite text-charcoal paper-grain flex flex-col font-sans overflow-x-hidden w-full">
+        
+        {/* Main Container */}
       <main className="flex-1 w-full max-w-6xl mx-auto px-6 py-10 space-y-28 md:space-y-36">
         
         {/* HERO SECTION */}
@@ -57,7 +58,7 @@ export default function Home() {
         <About scrollTo={scrollTo} />
 
         {/* PROJECTS SECTION */}
-        <Projects scrollTo={scrollTo} />
+        <Projects />
 
         {/* CONTACT SECTION */}
         <Contact />
@@ -74,5 +75,6 @@ export default function Home() {
       </footer>
 
     </div>
+    </>
   );
 }
