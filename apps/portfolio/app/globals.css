@@ -248,6 +248,13 @@
     transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
   }
 
+  /* Smooth transition for Hero section hover and parallax */
+  .transition-hero-smooth {
+    transition-property: transform, opacity, box-shadow, background-color, border-color, color;
+    transition-duration: 0.85s;
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
   .will-change-transform {
     will-change: transform;
   }

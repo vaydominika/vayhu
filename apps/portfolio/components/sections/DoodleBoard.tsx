@@ -124,13 +124,6 @@ const CursorMarker = ({ cursor }: { cursor: DoodleCursor }) => (
           className="absolute left-0 top-0 h-0 w-0 border-y-[8px] border-l-[12px] border-y-transparent drop-shadow-sm"
           style={{ borderLeftColor: cursor.user.color }}
         />
-        <div
-          className={cn(
-            "absolute left-2 top-2 h-2.5 w-2.5 rounded-full border border-white shadow-scrapbook-sm",
-            cursor.isDrawing && "scale-125"
-          )}
-          style={{ backgroundColor: cursor.user.color }}
-        />
       </div>
     </div>
   </div>
@@ -221,6 +214,8 @@ export const DoodleBoard: React.FC = () => {
   const [userCount, setUserCount] = useState(1);
   const [remoteCursors, setRemoteCursors] = useState<Record<string, DoodleCursor>>({});
   const [activeUsers, setActiveUsers] = useState<DoodleUser[]>([]);
+  const localCursorRef = useRef<HTMLDivElement | null>(null);
+  const [currentUser, setCurrentUser] = useState<DoodleUser | null>(null);
 
   const getClientId = useCallback(() => {
     if (!clientIdRef.current && typeof document !== "undefined") {
@@ -241,6 +236,10 @@ export const DoodleBoard: React.FC = () => {
 
     return currentUserRef.current;
   }, [getClientId]);
+
+  useEffect(() => {
+    setCurrentUser(getCurrentUser());
+  }, [getCurrentUser]);
 
   const sendMessage = useCallback((message: object) => {
     const socket = socketRef.current;
@@ -291,6 +290,9 @@ export const DoodleBoard: React.FC = () => {
     }
 
     latestCursorPayloadRef.current = null;
+    if (localCursorRef.current) {
+      localCursorRef.current.style.opacity = "0";
+    }
     sendMessage({ type: "cursor-leave", userId: getClientId() });
   }, [getClientId, sendMessage]);
 
@@ -525,6 +527,13 @@ export const DoodleBoard: React.FC = () => {
     const point = getPoint(event);
     const clientId = getClientId();
     getCurrentUser();
+
+    if (localCursorRef.current) {
+      localCursorRef.current.style.left = `${point.x * 100}%`;
+      localCursorRef.current.style.top = `${point.y * 100}%`;
+      localCursorRef.current.style.opacity = "1";
+    }
+
     sendCursor(point, true);
     setIsDrawing(true);
     activeStrokeRef.current = {
@@ -542,6 +551,13 @@ export const DoodleBoard: React.FC = () => {
 
   const handlePointerMove = (event: React.PointerEvent<HTMLCanvasElement>) => {
     const point = getPoint(event);
+
+    if (localCursorRef.current) {
+      localCursorRef.current.style.left = `${point.x * 100}%`;
+      localCursorRef.current.style.top = `${point.y * 100}%`;
+      localCursorRef.current.style.opacity = activeStrokeRef.current ? "1" : "0.82";
+    }
+
     sendCursor(point, Boolean(activeStrokeRef.current));
     if (!activeStrokeRef.current) return;
 
@@ -559,7 +575,15 @@ export const DoodleBoard: React.FC = () => {
 
     activeStrokeRef.current = null;
     setIsDrawing(false);
-    sendCursor(activeStroke.points.at(-1) ?? getPoint(event), false);
+
+    const endPoint = activeStroke.points.at(-1) ?? getPoint(event);
+    if (localCursorRef.current) {
+      localCursorRef.current.style.left = `${endPoint.x * 100}%`;
+      localCursorRef.current.style.top = `${endPoint.y * 100}%`;
+      localCursorRef.current.style.opacity = "0.82";
+    }
+
+    sendCursor(endPoint, false);
     setStrokes((currentStrokes) => [...currentStrokes, activeStroke].slice(-MAX_DOODLE_STROKES));
     sendMessage({ type: "stroke", stroke: activeStroke });
   };
@@ -659,7 +683,7 @@ export const DoodleBoard: React.FC = () => {
           >
             <canvas
               ref={canvasRef}
-              className="block h-full w-full touch-none cursor-crosshair"
+              className="block h-full w-full touch-none cursor-none"
               aria-label="Drawing canvas"
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
@@ -670,6 +694,31 @@ export const DoodleBoard: React.FC = () => {
             {visibleCursors.map((cursor) => (
               <CursorMarker key={cursor.user.id} cursor={cursor} />
             ))}
+            {currentUser && (
+              <div
+                ref={localCursorRef}
+                className="pointer-events-none absolute z-20 opacity-0"
+                style={{
+                  left: "0%",
+                  top: "0%",
+                }}
+              >
+                <div className="-translate-x-1 -translate-y-8">
+                  <div
+                    className="mb-1 w-max border bg-white/95 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-charcoal shadow-scrapbook-sm"
+                    style={{ borderColor: currentUser.color }}
+                  >
+                    {currentUser.name}
+                  </div>
+                  <div className="relative h-5 w-5">
+                    <div
+                      className="absolute left-0 top-0 h-0 w-0 border-y-[8px] border-l-[12px] border-y-transparent drop-shadow-sm"
+                      style={{ borderLeftColor: currentUser.color }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
             {!hasVisibleInk && !isDrawing && (
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center font-handwriting text-2xl text-charcoal/25">
                 draw something tiny

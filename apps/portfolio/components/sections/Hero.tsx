@@ -207,13 +207,13 @@ export const Hero: React.FC<HeroProps> = ({
         
         {/* Grid Pattern Sheet behind polaroid */}
         <div 
-          className="absolute w-[80%] h-[105%] bg-white grid-lines border border-[#D5D0C2]/20 rounded-lg shadow-scrapbook-sm -z-10 transition-cozy group-hover/collage:-translate-y-2 group-hover/collage:-rotate-3 will-change-transform"
+          className="absolute w-[80%] h-[105%] bg-white grid-lines border border-[#D5D0C2]/20 rounded-lg shadow-scrapbook-sm -z-10 transition-hero-smooth group-hover/collage:-translate-y-2 group-hover/collage:-rotate-3 will-change-transform"
           style={{ transform: "var(--hero-grid-transform, translate3d(0, 0, 0) rotate(-6deg))" }}
         ></div>
         
         {/* Torn green sheet behind */}
         <div 
-          className="absolute w-[85%] h-[98%] bg-sage/35 border border-sage/40 rounded-sm -z-20 transition-cozy group-hover/collage:-translate-y-1 group-hover/collage:rotate-2 will-change-transform"
+          className="absolute w-[85%] h-[98%] bg-sage/35 border border-sage/40 rounded-sm -z-20 transition-hero-smooth group-hover/collage:-translate-y-1 group-hover/collage:rotate-2 will-change-transform"
           style={{
             transform: "var(--hero-torn-transform, translate3d(0, 0, 0) rotate(3deg))",
             clipPath: "polygon(0% 6%, 3% 8%, 6% 5%, 9% 9%, 13% 6%, 16% 8%, 20% 5%, 23% 9%, 27% 6%, 30% 8%, 34% 5%, 37% 9%, 40% 6%, 44% 8%, 48% 5%, 51% 9%, 55% 6%, 58% 8%, 62% 5%, 65% 9%, 68% 6%, 72% 8%, 76% 5%, 80% 9%, 84% 5%, 87% 9%, 90% 6%, 94% 8%, 97% 5%, 100% 8%, 100% 92%, 97% 95%, 94% 91%, 90% 94%, 87% 92%, 84% 96%, 80% 92%, 76% 95%, 72% 91%, 68% 94%, 65% 91%, 62% 95%, 58% 92%, 55% 94%, 51% 91%, 48% 95%, 44% 92%, 40% 94%, 37% 91%, 34% 95%, 30% 92%, 27% 94%, 23% 91%, 20% 95%, 16% 92%, 13% 94%, 9% 91%, 6% 95%, 3% 92%, 0% 94%)"
@@ -222,7 +222,7 @@ export const Hero: React.FC<HeroProps> = ({
         
         {/* Main Polaroid Card */}
         <div
-          className="w-[85%] sm:w-[320px] z-10 transition-cozy group-hover/collage:-translate-y-3 will-change-transform"
+          className="w-[85%] sm:w-[320px] z-10 transition-hero-smooth group-hover/collage:-translate-y-3 will-change-transform"
           style={{ transform: "var(--hero-card-transform, translate3d(0, 0, 0) rotate(-1deg))" }}
         >
           <PaperCard 
@@ -246,7 +246,7 @@ export const Hero: React.FC<HeroProps> = ({
                 alt="Domi" 
                 fill
                 sizes="(max-width: 768px) 100vw, 320px"
-                className="object-cover grayscale-15 hover:grayscale-0 transition-[filter,transform] duration-500 hover:scale-103"
+                className="object-cover grayscale-15"
                 priority
               />
             </div>
@@ -255,7 +255,7 @@ export const Hero: React.FC<HeroProps> = ({
 
         {/* Yellow Sticky Note layered on the bottom right corner */}
         <div
-          className="absolute bottom-3 right-0 sm:right-[2px] z-20 transition-cozy group-hover/collage:-translate-y-2 group-hover/collage:rotate-6 will-change-transform"
+          className="absolute bottom-3 right-0 sm:right-[2px] z-20 transition-hero-smooth group-hover/collage:-translate-y-2 group-hover/collage:rotate-6 will-change-transform"
           style={{ transform: "var(--hero-note-transform, translate3d(0, 0, 0) rotate(3deg))" }}
         >
           <PaperCard 
