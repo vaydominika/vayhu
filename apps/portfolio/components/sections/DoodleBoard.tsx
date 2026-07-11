@@ -6,8 +6,10 @@ import { Brush, Eraser, PencilLine, RotateCcw, Trash2, UsersRound, WifiOff } fro
 import { PaperCard } from "@/components/PaperCard";
 import { Doodle } from "@/components/ui/Doodle";
 import {
+  DoodleCursor,
   DoodleServerMessage,
   DoodleStroke,
+  DoodleUser,
   MAX_DOODLE_STROKES,
 } from "@/lib/doodle-wall";
 import { cn } from "@/lib/utils";
@@ -20,12 +22,38 @@ const COLORS = [
   { name: "sunny", value: "#E5B94E" },
 ];
 
+const PRESENCE_COLORS = ["#DDBCC7", "#B8C8B0", "#AFCFC9", "#E5B94E", "#C7B8EA", "#E6A6A6"];
+const NAME_ADJECTIVES = ["Tiny", "Sparkly", "Jelly", "Zippy", "Cosmic", "Sunny", "Velvet", "Lucky"];
+const NAME_NOUNS = ["Pencil", "Comet", "Pickle", "Sticker", "Moon", "Button", "Doodle", "Pebble"];
+const CURSOR_SEND_INTERVAL = 50;
+const CURSOR_STALE_AFTER = 4500;
+
 const createId = () => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
   }
 
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+};
+
+const hashString = (value: string) => {
+  let hash = 0;
+
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) >>> 0;
+  }
+
+  return hash;
+};
+
+const createDoodleUser = (id: string): DoodleUser => {
+  const hash = hashString(id);
+
+  return {
+    id,
+    name: `${NAME_ADJECTIVES[hash % NAME_ADJECTIVES.length]} ${NAME_NOUNS[(hash >> 3) % NAME_NOUNS.length]}`,
+    color: PRESENCE_COLORS[hash % PRESENCE_COLORS.length],
+  };
 };
 
 const DOODLE_USER_COOKIE = "vay_doodle_user_id";
@@ -74,6 +102,39 @@ const denormalizePoint = (point: DoodleStroke["points"][number], width: number, 
   x: point.x * width,
   y: point.y * height,
 });
+
+const CursorMarker = ({ cursor }: { cursor: DoodleCursor }) => (
+  <div
+    className="pointer-events-none absolute z-20 transition-[left,top,opacity] duration-100"
+    style={{
+      left: `${cursor.point.x * 100}%`,
+      top: `${cursor.point.y * 100}%`,
+      opacity: cursor.isDrawing ? 1 : 0.82,
+    }}
+  >
+    <div className="-translate-x-1 -translate-y-8">
+      <div
+        className="mb-1 w-max border bg-white/95 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-charcoal shadow-scrapbook-sm"
+        style={{ borderColor: cursor.user.color }}
+      >
+        {cursor.user.name}
+      </div>
+      <div className="relative h-5 w-5">
+        <div
+          className="absolute left-0 top-0 h-0 w-0 border-y-[8px] border-l-[12px] border-y-transparent drop-shadow-sm"
+          style={{ borderLeftColor: cursor.user.color }}
+        />
+        <div
+          className={cn(
+            "absolute left-2 top-2 h-2.5 w-2.5 rounded-full border border-white shadow-scrapbook-sm",
+            cursor.isDrawing && "scale-125"
+          )}
+          style={{ backgroundColor: cursor.user.color }}
+        />
+      </div>
+    </div>
+  </div>
+);
 
 const hasCanvasInk = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
   if (width === 0 || height === 0) return false;
@@ -140,6 +201,11 @@ export const DoodleBoard: React.FC = () => {
   const boardRef = useRef<HTMLDivElement | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const clientIdRef = useRef("");
+  const currentUserRef = useRef<DoodleUser | null>(null);
+  const lastCursorSentAtRef = useRef(0);
+  const latestCursorPayloadRef = useRef<{ point: DoodleStroke["points"][number]; isDrawing: boolean } | null>(null);
+  const cursorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const redrawFrameRef = useRef<number | null>(null);
   const activeStrokeRef = useRef<DoodleStroke | null>(null);
   const strokesRef = useRef<DoodleStroke[]>([]);
   const hasVisibleInkRef = useRef(false);
@@ -153,6 +219,8 @@ export const DoodleBoard: React.FC = () => {
   const [tool, setTool] = useState<"draw" | "erase">("draw");
   const [connectionState, setConnectionState] = useState<"local" | "connecting" | "live">("local");
   const [userCount, setUserCount] = useState(1);
+  const [remoteCursors, setRemoteCursors] = useState<Record<string, DoodleCursor>>({});
+  const [activeUsers, setActiveUsers] = useState<DoodleUser[]>([]);
 
   const getClientId = useCallback(() => {
     if (!clientIdRef.current && typeof document !== "undefined") {
@@ -166,12 +234,65 @@ export const DoodleBoard: React.FC = () => {
     return clientIdRef.current;
   }, []);
 
+  const getCurrentUser = useCallback(() => {
+    if (!currentUserRef.current) {
+      currentUserRef.current = createDoodleUser(getClientId());
+    }
+
+    return currentUserRef.current;
+  }, [getClientId]);
+
   const sendMessage = useCallback((message: object) => {
     const socket = socketRef.current;
     if (socket?.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify(message));
     }
   }, []);
+
+  const flushCursor = useCallback(() => {
+    const payload = latestCursorPayloadRef.current;
+    if (!payload) return;
+
+    latestCursorPayloadRef.current = null;
+    lastCursorSentAtRef.current = Date.now();
+    sendMessage({
+      type: "cursor",
+      user: getCurrentUser(),
+      point: payload.point,
+      isDrawing: payload.isDrawing,
+    });
+  }, [getCurrentUser, sendMessage]);
+
+  const sendCursor = useCallback((point: DoodleStroke["points"][number], isDrawing: boolean) => {
+    latestCursorPayloadRef.current = { point, isDrawing };
+    const elapsed = Date.now() - lastCursorSentAtRef.current;
+
+    if (elapsed >= CURSOR_SEND_INTERVAL) {
+      if (cursorTimerRef.current) {
+        clearTimeout(cursorTimerRef.current);
+        cursorTimerRef.current = null;
+      }
+      flushCursor();
+      return;
+    }
+
+    if (!cursorTimerRef.current) {
+      cursorTimerRef.current = setTimeout(() => {
+        cursorTimerRef.current = null;
+        flushCursor();
+      }, CURSOR_SEND_INTERVAL - elapsed);
+    }
+  }, [flushCursor]);
+
+  const sendCursorLeave = useCallback(() => {
+    if (cursorTimerRef.current) {
+      clearTimeout(cursorTimerRef.current);
+      cursorTimerRef.current = null;
+    }
+
+    latestCursorPayloadRef.current = null;
+    sendMessage({ type: "cursor-leave", userId: getClientId() });
+  }, [getClientId, sendMessage]);
 
   const redraw = useCallback((nextStrokes: DoodleStroke[] = strokesRef.current, updateInkState = true) => {
     const canvas = canvasRef.current;
@@ -227,10 +348,25 @@ export const DoodleBoard: React.FC = () => {
     }
   }, []);
 
+  const scheduleLiveRedraw = useCallback(() => {
+    if (redrawFrameRef.current !== null) return;
+
+    redrawFrameRef.current = requestAnimationFrame(() => {
+      redrawFrameRef.current = null;
+      redraw(strokesRef.current, false);
+    });
+  }, [redraw]);
+
   useEffect(() => {
     strokesRef.current = strokes;
     redraw(strokes);
   }, [redraw, strokes]);
+
+  useEffect(() => () => {
+    if (redrawFrameRef.current !== null) {
+      cancelAnimationFrame(redrawFrameRef.current);
+    }
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -327,16 +463,53 @@ export const DoodleBoard: React.FC = () => {
         return;
       }
 
+      if (message.type === "cursor") {
+        if (message.cursor.user.id === clientIdRef.current) return;
+
+        setRemoteCursors((currentCursors) => ({
+          ...currentCursors,
+          [message.cursor.user.id]: message.cursor,
+        }));
+        return;
+      }
+
+      if (message.type === "cursor-leave") {
+        setRemoteCursors((currentCursors) => {
+          const nextCursors = { ...currentCursors };
+          delete nextCursors[message.userId];
+          return nextCursors;
+        });
+        setActiveUsers((currentUsers) => currentUsers.filter((user) => user.id !== message.userId));
+        return;
+      }
+
       if (message.type === "presence") {
         setUserCount(message.users);
+        setActiveUsers((message.activeUsers ?? []).filter((user) => user.id !== clientIdRef.current));
       }
     });
 
     return () => {
+      sendCursorLeave();
       socket.close();
       socketRef.current = null;
     };
-  }, [getClientId]);
+  }, [getClientId, sendCursorLeave]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      const now = Date.now();
+
+      setRemoteCursors((currentCursors) => {
+        const entries = Object.entries(currentCursors).filter(([, cursor]) => now - cursor.updatedAt < CURSOR_STALE_AFTER);
+        if (entries.length === Object.keys(currentCursors).length) return currentCursors;
+
+        return Object.fromEntries(entries);
+      });
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, []);
 
   const getPoint = (event: React.PointerEvent<HTMLCanvasElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -351,6 +524,8 @@ export const DoodleBoard: React.FC = () => {
     event.currentTarget.setPointerCapture(event.pointerId);
     const point = getPoint(event);
     const clientId = getClientId();
+    getCurrentUser();
+    sendCursor(point, true);
     setIsDrawing(true);
     activeStrokeRef.current = {
       id: createId(),
@@ -362,14 +537,16 @@ export const DoodleBoard: React.FC = () => {
       points: [point],
       createdAt: Date.now(),
     };
-    redraw(strokesRef.current, false);
+    scheduleLiveRedraw();
   };
 
   const handlePointerMove = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    const point = getPoint(event);
+    sendCursor(point, Boolean(activeStrokeRef.current));
     if (!activeStrokeRef.current) return;
 
-    activeStrokeRef.current.points.push(getPoint(event));
-    redraw(strokesRef.current, false);
+    activeStrokeRef.current.points.push(point);
+    scheduleLiveRedraw();
   };
 
   const finishStroke = (event: React.PointerEvent<HTMLCanvasElement>) => {
@@ -382,8 +559,14 @@ export const DoodleBoard: React.FC = () => {
 
     activeStrokeRef.current = null;
     setIsDrawing(false);
+    sendCursor(activeStroke.points.at(-1) ?? getPoint(event), false);
     setStrokes((currentStrokes) => [...currentStrokes, activeStroke].slice(-MAX_DOODLE_STROKES));
     sendMessage({ type: "stroke", stroke: activeStroke });
+  };
+
+  const handlePointerLeaveBoard = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    finishStroke(event);
+    sendCursorLeave();
   };
 
   const undo = () => {
@@ -407,6 +590,7 @@ export const DoodleBoard: React.FC = () => {
 
   const hasOwnUndoHistory = strokes.some((stroke) => stroke.authorId === clientIdRef.current);
   const activePreviewSize = tool === "erase" ? Math.max(brushSize * 2, 14) : brushSize;
+  const visibleCursors = Object.values(remoteCursors);
 
   return (
     <section id="doodle" className="relative scroll-mt-24">
@@ -480,9 +664,12 @@ export const DoodleBoard: React.FC = () => {
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={finishStroke}
-              onPointerCancel={finishStroke}
-              onPointerLeave={finishStroke}
+              onPointerCancel={handlePointerLeaveBoard}
+              onPointerLeave={handlePointerLeaveBoard}
             />
+            {visibleCursors.map((cursor) => (
+              <CursorMarker key={cursor.user.id} cursor={cursor} />
+            ))}
             {!hasVisibleInk && !isDrawing && (
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center font-handwriting text-2xl text-charcoal/25">
                 draw something tiny
@@ -502,6 +689,18 @@ export const DoodleBoard: React.FC = () => {
               >
                 {connectionState === "live" ? <UsersRound className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
                 {connectionState === "live" ? `${userCount} online` : connectionState === "connecting" ? "connecting" : "local only"}
+                {activeUsers.length > 0 && (
+                  <span className="ml-1 hidden items-center gap-1 sm:inline-flex">
+                    {activeUsers.slice(0, 4).map((user) => (
+                      <span
+                        key={user.id}
+                        className="h-2 w-2 rounded-full border border-white/70"
+                        style={{ backgroundColor: user.color }}
+                        title={user.name}
+                      />
+                    ))}
+                  </span>
+                )}
               </div>
 
               <div>

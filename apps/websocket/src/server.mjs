@@ -17,6 +17,7 @@ const ALLOWED_ORIGINS = (process.env.DOODLE_ALLOWED_ORIGINS || "")
 /** @type {Array<import("./types.js").DoodleStroke>} */
 let strokes = [];
 const clients = new Map();
+const cursors = new Map();
 let saveTimer = null;
 
 const isAllowedOrigin = (origin) => {
@@ -27,6 +28,15 @@ const isAllowedOrigin = (origin) => {
 };
 
 const isFiniteNumber = (value) => typeof value === "number" && Number.isFinite(value);
+
+const isValidUser = (user, authorId) => {
+  if (!user || typeof user !== "object") return false;
+  if (user.id !== authorId) return false;
+  if (typeof user.name !== "string" || user.name.length < 2 || user.name.length > 40) return false;
+  if (typeof user.color !== "string" || !/^#[0-9a-f]{6}$/i.test(user.color)) return false;
+
+  return true;
+};
 
 const isValidPoint = (point, coordinateSpace) => {
   if (!point || !isFiniteNumber(point.x) || !isFiniteNumber(point.y)) return false;
@@ -63,7 +73,8 @@ const broadcast = (message) => {
 };
 
 const broadcastPresence = () => {
-  broadcast({ type: "presence", users: clients.size });
+  const activeUsers = [...cursors.values()].map((cursor) => cursor.user);
+  broadcast({ type: "presence", users: clients.size, activeUsers });
 };
 
 const queueSave = () => {
@@ -213,6 +224,26 @@ const handleMessage = (socket, authorId, rawMessage) => {
       broadcast({ type: "clear-own", authorId });
       queueSave();
     }
+    return;
+  }
+
+  if (message.type === "cursor" && isValidUser(message.user, authorId) && isValidPoint(message.point, "normalized")) {
+    const cursor = {
+      user: message.user,
+      point: message.point,
+      isDrawing: Boolean(message.isDrawing),
+      updatedAt: Date.now(),
+    };
+
+    cursors.set(authorId, cursor);
+    broadcast({ type: "cursor", cursor });
+    return;
+  }
+
+  if (message.type === "cursor-leave" && message.userId === authorId) {
+    cursors.delete(authorId);
+    broadcast({ type: "cursor-leave", userId: authorId });
+    broadcastPresence();
   }
 };
 
@@ -252,6 +283,8 @@ websocketServer.on("connection", (socket, request) => {
   socket.on("message", (message) => handleMessage(socket, authorId, message));
   socket.on("close", () => {
     clients.delete(socket);
+    cursors.delete(authorId);
+    broadcast({ type: "cursor-leave", userId: authorId });
     broadcastPresence();
   });
 });
