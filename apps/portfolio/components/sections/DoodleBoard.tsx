@@ -2,12 +2,10 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import PartySocket from "partysocket";
 import { Brush, Eraser, PencilLine, RotateCcw, Trash2, UsersRound, WifiOff } from "lucide-react";
 import { PaperCard } from "@/components/PaperCard";
 import { Doodle } from "@/components/ui/Doodle";
 import {
-  DOODLE_ROOM_ID,
   DoodleServerMessage,
   DoodleStroke,
   MAX_DOODLE_STROKES,
@@ -30,16 +28,22 @@ const createId = () => {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 };
 
-const getPartyHost = () => {
-  if (process.env.NEXT_PUBLIC_PARTYKIT_HOST) {
-    return process.env.NEXT_PUBLIC_PARTYKIT_HOST;
+const getDoodleWebSocketUrl = (clientId: string) => {
+  const configuredHost = process.env.NEXT_PUBLIC_DOODLE_WS_HOST;
+  let host = configuredHost || "";
+
+  if (!host && typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname)) {
+    host = "ws://127.0.0.1:1999";
   }
 
-  if (typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname)) {
-    return "127.0.0.1:1999";
-  }
+  if (!host) return "";
 
-  return "";
+  const isFullUrl = host.startsWith("ws://") || host.startsWith("wss://");
+  const isLocalHost = host.includes("localhost") || host.includes("127.0.0.1");
+  const url = new URL(isFullUrl ? host : `${isLocalHost ? "ws" : "wss"}://${host}`);
+  url.searchParams.set("clientId", clientId);
+
+  return url.toString();
 };
 
 const clamp = (value: number) => Math.min(Math.max(value, 0), 1);
@@ -112,7 +116,7 @@ const createLayer = (canvas: HTMLCanvasElement) => {
 export const DoodleBoard: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const boardRef = useRef<HTMLDivElement | null>(null);
-  const socketRef = useRef<PartySocket | null>(null);
+  const socketRef = useRef<WebSocket | null>(null);
   const clientIdRef = useRef(createId());
   const activeStrokeRef = useRef<DoodleStroke | null>(null);
   const strokesRef = useRef<DoodleStroke[]>([]);
@@ -224,21 +228,15 @@ export const DoodleBoard: React.FC = () => {
   }, [redraw]);
 
   useEffect(() => {
-    const host = getPartyHost();
-    if (!host) {
+    const socketUrl = getDoodleWebSocketUrl(clientIdRef.current);
+    if (!socketUrl) {
       setConnectionState("local");
       return;
     }
 
     setConnectionState("connecting");
 
-    const socket = new PartySocket({
-      host,
-      room: DOODLE_ROOM_ID,
-      party: "main",
-      id: clientIdRef.current,
-      protocol: host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "ws" : "wss",
-    });
+    const socket = new WebSocket(socketUrl);
 
     socketRef.current = socket;
 
@@ -368,7 +366,7 @@ export const DoodleBoard: React.FC = () => {
     sendMessage({ type: "clear-own" });
   };
 
-  const hasOwnUndoHistory = strokes.some((stroke) => stroke.authorId === clientIdRef.current && stroke.mode === "draw");
+  const hasOwnUndoHistory = strokes.some((stroke) => stroke.authorId === clientIdRef.current);
 
   return (
     <section id="doodle" className="relative scroll-mt-24">

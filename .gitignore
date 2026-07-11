@@ -15,10 +15,16 @@
 
 # next.js
 /.next/
+/apps/*/.next/
 /out/
+/apps/*/out/
 
 # production
 /build
+/apps/*/build
+
+# local websocket storage
+/apps/websocket/data/
 
 # misc
 .DS_Store

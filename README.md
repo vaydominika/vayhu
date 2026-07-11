@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# vay.hu
 
-## Getting Started
+Monorepo for the portfolio and the shared doodle websocket.
 
-First, run the development server:
+## Apps
+
+- `apps/portfolio` - Next.js portfolio site.
+- `apps/websocket` - self-hosted websocket service for the doodle wall.
+
+## Local Development
+
+Install dependencies from the repo root:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Run the portfolio:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run dev:portfolio
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Run the websocket service in a second terminal:
 
-## Learn More
+```bash
+npm run dev:websocket
+```
 
-To learn more about Next.js, take a look at the following resources:
+The portfolio connects to `ws://127.0.0.1:1999` automatically on localhost. For a custom target, set:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+NEXT_PUBLIC_DOODLE_WS_HOST=ws://127.0.0.1:1999
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Docker Compose
 
-## Deploy on Vercel
+```bash
+docker compose up --build
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Services:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Portfolio: `http://localhost:3000`
+- Websocket health check: `http://localhost:1999/health`
+
+## Coolify
+
+Use two services from this repo:
+
+- `portfolio`: Dockerfile `apps/portfolio/Dockerfile`, domain `vay.hu`
+- `websocket`: Dockerfile `apps/websocket/Dockerfile`, domain `doodle.vay.hu`
+
+Set these env vars:
+
+```bash
+NEXT_PUBLIC_DOODLE_WS_HOST=wss://doodle.vay.hu
+DOODLE_STORAGE_FILE=/app/data/doodle-strokes.json
+DOODLE_ALLOWED_ORIGINS=https://vay.hu,https://www.vay.hu
+```
+
+`NEXT_PUBLIC_DOODLE_WS_HOST` must be available during the portfolio image build because Next.js bakes public env vars into the browser bundle.
+
+Add persistent storage for the websocket service at `/app/data` so doodles survive deploys and restarts.

@@ -1,0 +1,30 @@
+services:
+  portfolio:
+    build:
+      context: .
+      dockerfile: apps/portfolio/Dockerfile
+      args:
+        NEXT_PUBLIC_DOODLE_WS_HOST: ${NEXT_PUBLIC_DOODLE_WS_HOST:-ws://localhost:1999}
+    environment:
+      NEXT_PUBLIC_DOODLE_WS_HOST: ${NEXT_PUBLIC_DOODLE_WS_HOST:-ws://localhost:1999}
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - websocket
+
+  websocket:
+    build:
+      context: .
+      dockerfile: apps/websocket/Dockerfile
+    environment:
+      PORT: 1999
+      DOODLE_STORAGE_FILE: /app/data/doodle-strokes.json
+      DOODLE_ALLOWED_ORIGINS: ${DOODLE_ALLOWED_ORIGINS:-}
+    ports:
+      - "1999:1999"
+    volumes:
+      - doodle-data:/app/data
+
+volumes:
+  doodle-data:
