@@ -177,7 +177,7 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
             
             {/* Scrapbook Tab Header using badge-3.svg */}
             <div 
-              className="absolute -top-25 left-2 w-45 h-45 z-30 select-none flex items-center justify-center transition-cozy group-hover/aboutcard:-translate-y-1 will-change-transform"
+              className="absolute -top-25 left-2 w-45 h-45 z-30 select-none flex items-center justify-center transition-cozy group-hover/aboutcard:-translate-y-1 will-change-transform pointer-events-none"
               style={{ transform: "var(--about-badge-transform, translate3d(0, 0, 0) rotate(-2.5deg))" }}
             >
               <Doodle 
@@ -185,7 +185,7 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
                 className="absolute inset-0 w-full h-full" 
                 color="bg-teal" 
               />
-              <span className="relative z-10 font-serif font-bold text-lg text-charcoal pt-1 flex items-center gap-1">
+              <span className="relative z-10 font-serif font-bold text-lg text-charcoal pt-1 flex items-center gap-1 pointer-events-auto">
                 About me
                 <Doodle src="/assets/heart-1.svg" className="w-3.5 h-3.5" color="bg-pink" />
               </span>
