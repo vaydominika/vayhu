@@ -7,6 +7,16 @@ services:
         NEXT_PUBLIC_DOODLE_WS_HOST: ${NEXT_PUBLIC_DOODLE_WS_HOST:-ws://localhost:1999}
     environment:
       NEXT_PUBLIC_DOODLE_WS_HOST: ${NEXT_PUBLIC_DOODLE_WS_HOST:-ws://localhost:1999}
+      CONTACT_TO_EMAIL: ${CONTACT_TO_EMAIL:-info@vay.hu}
+      CONTACT_FROM_EMAIL: ${CONTACT_FROM_EMAIL:-Portfolio <noreply@vay.hu>}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-vaydominika@gmail.com}
+      AUTH_SECRET: ${AUTH_SECRET:-}
+      AUTH_GOOGLE_ID: ${AUTH_GOOGLE_ID:-}
+      AUTH_GOOGLE_SECRET: ${AUTH_GOOGLE_SECRET:-}
+      AUTH_URL: ${AUTH_URL:-http://localhost:3000}
+      DOODLE_ADMIN_TOKEN: ${DOODLE_ADMIN_TOKEN:-}
+      DOODLE_ADMIN_API_URL: ${DOODLE_ADMIN_API_URL:-http://websocket:1999}
       PORT: 3000
     ports:
       - "3000:3000"
@@ -19,8 +29,9 @@ services:
       dockerfile: apps/websocket/Dockerfile
     environment:
       PORT: 1999
-      DOODLE_STORAGE_FILE: /app/data/doodle-strokes.json
+      DOODLE_STORAGE_FILE: ${DOODLE_STORAGE_FILE:-/app/data/doodle-strokes.json}
       DOODLE_ALLOWED_ORIGINS: ${DOODLE_ALLOWED_ORIGINS:-}
+      DOODLE_ADMIN_TOKEN: ${DOODLE_ADMIN_TOKEN:-}
     ports:
       - "1999:1999"
     volumes:

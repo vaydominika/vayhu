@@ -2,10 +2,11 @@ import { randomUUID } from "node:crypto";
 import { createServer } from "node:http";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { WebSocketServer } from "ws";
+import { WebSocket, WebSocketServer } from "ws";
 
 const PORT = Number(process.env.PORT || 1999);
 const STORAGE_FILE = process.env.DOODLE_STORAGE_FILE || path.join(process.cwd(), "data", "doodle-strokes.json");
+const ADMIN_TOKEN = process.env.DOODLE_ADMIN_TOKEN || "";
 const MAX_DOODLE_STROKES = 250;
 const MAX_STROKE_POINTS = 600;
 const ALLOWED_ORIGINS = (process.env.DOODLE_ALLOWED_ORIGINS || "")
@@ -55,7 +56,7 @@ const broadcast = (message) => {
   const payload = JSON.stringify(message);
 
   for (const socket of clients.keys()) {
-    if (socket.readyState === socket.OPEN) {
+    if (socket.readyState === WebSocket.OPEN) {
       socket.send(payload);
     }
   }
@@ -92,6 +93,87 @@ const loadStrokes = async () => {
       console.error("Failed to load doodles", error);
     }
   }
+};
+
+const json = (response, status, body) => {
+  response.writeHead(status, { "content-type": "application/json" });
+  response.end(JSON.stringify(body));
+};
+
+const hasAdminAccess = (request) => {
+  if (!ADMIN_TOKEN) return false;
+
+  const authorization = request.headers.authorization || "";
+  return authorization === `Bearer ${ADMIN_TOKEN}`;
+};
+
+const deleteStroke = (strokeId) => {
+  const nextStrokes = strokes.filter((stroke) => stroke.id !== strokeId);
+  if (nextStrokes.length === strokes.length) return false;
+
+  strokes = nextStrokes;
+  broadcast({ type: "delete-stroke", strokeId });
+  queueSave();
+
+  return true;
+};
+
+const deleteUserStrokes = (authorId) => {
+  const nextStrokes = strokes.filter((stroke) => stroke.authorId !== authorId);
+  const deleted = strokes.length - nextStrokes.length;
+  if (deleted === 0) return 0;
+
+  strokes = nextStrokes;
+  broadcast({ type: "clear-own", authorId });
+  queueSave();
+
+  return deleted;
+};
+
+const clearAllStrokes = () => {
+  const deleted = strokes.length;
+  strokes = [];
+  broadcast({ type: "clear-all" });
+  queueSave();
+
+  return deleted;
+};
+
+const handleAdminRequest = (request, response, url) => {
+  if (!hasAdminAccess(request)) {
+    json(response, 401, { error: "Unauthorized" });
+    return true;
+  }
+
+  if (request.method === "GET" && url.pathname === "/admin/strokes") {
+    json(response, 200, { strokes });
+    return true;
+  }
+
+  const strokeMatch = url.pathname.match(/^\/admin\/strokes\/([^/]+)$/);
+  if (request.method === "DELETE" && strokeMatch) {
+    const strokeId = decodeURIComponent(strokeMatch[1]);
+    const deleted = deleteStroke(strokeId);
+    json(response, deleted ? 200 : 404, deleted ? { ok: true } : { error: "Stroke not found" });
+    return true;
+  }
+
+  const userMatch = url.pathname.match(/^\/admin\/users\/([^/]+)\/strokes$/);
+  if (request.method === "DELETE" && userMatch) {
+    const authorId = decodeURIComponent(userMatch[1]);
+    const deleted = deleteUserStrokes(authorId);
+    json(response, 200, { ok: true, deleted });
+    return true;
+  }
+
+  if (request.method === "POST" && url.pathname === "/admin/clear") {
+    const deleted = clearAllStrokes();
+    json(response, 200, { ok: true, deleted });
+    return true;
+  }
+
+  json(response, 404, { error: "Not found" });
+  return true;
 };
 
 const handleMessage = (socket, authorId, rawMessage) => {
@@ -137,9 +219,15 @@ const handleMessage = (socket, authorId, rawMessage) => {
 await loadStrokes();
 
 const server = createServer((request, response) => {
-  if (request.url === "/health") {
-    response.writeHead(200, { "content-type": "application/json" });
-    response.end(JSON.stringify({ ok: true, users: clients.size, strokes: strokes.length }));
+  const url = new URL(request.url || "/", "http://localhost");
+
+  if (url.pathname === "/health") {
+    json(response, 200, { ok: true, users: clients.size, strokes: strokes.length });
+    return;
+  }
+
+  if (url.pathname.startsWith("/admin/")) {
+    handleAdminRequest(request, response, url);
     return;
   }
 

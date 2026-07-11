@@ -24,6 +24,8 @@ export type DoodleServerMessage =
   | { type: "stroke"; stroke: DoodleStroke }
   | { type: "undo"; strokeId: string }
   | { type: "clear-own"; authorId: string }
+  | { type: "delete-stroke"; strokeId: string }
+  | { type: "clear-all" }
   | { type: "presence"; users: number };
 
 export const DOODLE_ROOM_ID = "vay-doodle-wall";

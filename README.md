@@ -57,8 +57,21 @@ Set these env vars:
 NEXT_PUBLIC_DOODLE_WS_HOST=wss://doodle.vay.hu
 DOODLE_STORAGE_FILE=/app/data/doodle-strokes.json
 DOODLE_ALLOWED_ORIGINS=https://vay.hu,https://www.vay.hu
+ADMIN_EMAIL=vaydominika@gmail.com
+AUTH_SECRET=<generated_random_secret>
+AUTH_GOOGLE_ID=<google_oauth_client_id>
+AUTH_GOOGLE_SECRET=<google_oauth_client_secret>
+AUTH_URL=https://vay.hu
+DOODLE_ADMIN_TOKEN=<long_random_shared_token>
+DOODLE_ADMIN_API_URL=http://websocket:1999
 ```
 
 `NEXT_PUBLIC_DOODLE_WS_HOST` must be available during the portfolio image build because Next.js bakes public env vars into the browser bundle.
 
 Add persistent storage for the websocket service at `/app/data` so doodles survive deploys and restarts.
+
+For Google login, add this authorized redirect URI in Google Cloud:
+
+```txt
+https://vay.hu/api/auth/callback/google
+```

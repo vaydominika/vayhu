@@ -28,6 +28,28 @@ const createId = () => {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 };
 
+const DOODLE_USER_COOKIE = "vay_doodle_user_id";
+const DOODLE_USER_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
+const getCookieValue = (name: string) => {
+  if (typeof document === "undefined") return "";
+
+  return document.cookie
+    .split("; ")
+    .find((cookie) => cookie.startsWith(`${name}=`))
+    ?.split("=")[1] ?? "";
+};
+
+const getOrCreateDoodleUserId = () => {
+  const existingId = decodeURIComponent(getCookieValue(DOODLE_USER_COOKIE));
+  if (existingId) return existingId;
+
+  const nextId = createId();
+  document.cookie = `${DOODLE_USER_COOKIE}=${encodeURIComponent(nextId)}; max-age=${DOODLE_USER_COOKIE_MAX_AGE}; path=/; samesite=lax`;
+
+  return nextId;
+};
+
 const getDoodleWebSocketUrl = (clientId: string) => {
   const configuredHost = process.env.NEXT_PUBLIC_DOODLE_WS_HOST;
   let host = configuredHost || "";
@@ -117,7 +139,7 @@ export const DoodleBoard: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const boardRef = useRef<HTMLDivElement | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
-  const clientIdRef = useRef(createId());
+  const clientIdRef = useRef("");
   const activeStrokeRef = useRef<DoodleStroke | null>(null);
   const strokesRef = useRef<DoodleStroke[]>([]);
   const hasVisibleInkRef = useRef(false);
@@ -131,6 +153,18 @@ export const DoodleBoard: React.FC = () => {
   const [tool, setTool] = useState<"draw" | "erase">("draw");
   const [connectionState, setConnectionState] = useState<"local" | "connecting" | "live">("local");
   const [userCount, setUserCount] = useState(1);
+
+  const getClientId = useCallback(() => {
+    if (!clientIdRef.current && typeof document !== "undefined") {
+      clientIdRef.current = getOrCreateDoodleUserId();
+    }
+
+    if (!clientIdRef.current) {
+      clientIdRef.current = createId();
+    }
+
+    return clientIdRef.current;
+  }, []);
 
   const sendMessage = useCallback((message: object) => {
     const socket = socketRef.current;
@@ -228,7 +262,7 @@ export const DoodleBoard: React.FC = () => {
   }, [redraw]);
 
   useEffect(() => {
-    const socketUrl = getDoodleWebSocketUrl(clientIdRef.current);
+    const socketUrl = getDoodleWebSocketUrl(getClientId());
     if (!socketUrl) {
       setConnectionState("local");
       return;
@@ -283,6 +317,16 @@ export const DoodleBoard: React.FC = () => {
         return;
       }
 
+      if (message.type === "delete-stroke") {
+        setStrokes((currentStrokes) => currentStrokes.filter((stroke) => stroke.id !== message.strokeId));
+        return;
+      }
+
+      if (message.type === "clear-all") {
+        setStrokes([]);
+        return;
+      }
+
       if (message.type === "presence") {
         setUserCount(message.users);
       }
@@ -292,7 +336,7 @@ export const DoodleBoard: React.FC = () => {
       socket.close();
       socketRef.current = null;
     };
-  }, []);
+  }, [getClientId]);
 
   const getPoint = (event: React.PointerEvent<HTMLCanvasElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -306,10 +350,11 @@ export const DoodleBoard: React.FC = () => {
   const handlePointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
     event.currentTarget.setPointerCapture(event.pointerId);
     const point = getPoint(event);
+    const clientId = getClientId();
     setIsDrawing(true);
     activeStrokeRef.current = {
       id: createId(),
-      authorId: clientIdRef.current,
+      authorId: clientId,
       coordinateSpace: "normalized",
       color: selectedColor,
       size: tool === "erase" ? Math.max(brushSize * 2, 14) : brushSize,
@@ -344,19 +389,13 @@ export const DoodleBoard: React.FC = () => {
   const undo = () => {
     setIsDrawing(false);
     activeStrokeRef.current = null;
-    let removedStrokeId = "";
+    const ownStrokeIndex = strokesRef.current.findLastIndex((stroke) => stroke.authorId === clientIdRef.current);
+    if (ownStrokeIndex === -1) return;
 
-    setStrokes((currentStrokes) => {
-      const ownStrokeIndex = currentStrokes.findLastIndex((stroke) => stroke.authorId === clientIdRef.current);
-      if (ownStrokeIndex === -1) return currentStrokes;
+    const removedStrokeId = strokesRef.current[ownStrokeIndex].id;
 
-      removedStrokeId = currentStrokes[ownStrokeIndex].id;
-      return currentStrokes.filter((_, index) => index !== ownStrokeIndex);
-    });
-
-    if (removedStrokeId) {
-      sendMessage({ type: "undo", strokeId: removedStrokeId });
-    }
+    setStrokes((currentStrokes) => currentStrokes.filter((stroke) => stroke.id !== removedStrokeId));
+    sendMessage({ type: "undo", strokeId: removedStrokeId });
   };
 
   const clear = () => {
@@ -367,6 +406,7 @@ export const DoodleBoard: React.FC = () => {
   };
 
   const hasOwnUndoHistory = strokes.some((stroke) => stroke.authorId === clientIdRef.current);
+  const activePreviewSize = tool === "erase" ? Math.max(brushSize * 2, 14) : brushSize;
 
   return (
     <section id="doodle" className="relative scroll-mt-24">
@@ -528,20 +568,40 @@ export const DoodleBoard: React.FC = () => {
                 <label htmlFor="brush-size" className="mb-2 block font-mono text-[10px] uppercase tracking-[0.2em] text-charcoal/45">
                   size
                 </label>
-                <div className="flex items-center gap-3">
+                <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
                   <Brush className="h-4 w-4 text-charcoal/45" />
-                  <input
-                    id="brush-size"
-                    type="range"
-                    min="2"
-                    max="18"
-                    value={brushSize}
-                    onChange={(event) => setBrushSize(Number(event.target.value))}
-                    className="w-full accent-charcoal"
-                  />
-                  <span className="w-8 text-right font-mono text-xs text-charcoal/55">
-                    {brushSize}px
-                  </span>
+                  <div className="min-w-0 px-1">
+                    <input
+                      id="brush-size"
+                      type="range"
+                      min="2"
+                      max="18"
+                      value={brushSize}
+                      onChange={(event) => setBrushSize(Number(event.target.value))}
+                      className="block h-[18px] w-full cursor-pointer appearance-none bg-transparent accent-[var(--size-color)] [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-[var(--size-color)] [&::-moz-range-thumb]:h-[18px] [&::-moz-range-thumb]:w-[18px] [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-[var(--size-color)] [&::-moz-range-thumb]:shadow-scrapbook-sm [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-[var(--size-muted)] [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-[linear-gradient(to_right,var(--size-color)_0%,var(--size-color)_var(--size-progress),var(--size-muted)_var(--size-progress),var(--size-muted)_100%)] [&::-webkit-slider-thumb]:mt-[-5px] [&::-webkit-slider-thumb]:h-[18px] [&::-webkit-slider-thumb]:w-[18px] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-0 [&::-webkit-slider-thumb]:bg-[var(--size-color)] [&::-webkit-slider-thumb]:shadow-scrapbook-sm"
+                      style={{
+                        "--size-color": tool === "erase" ? "#3A3A3A" : selectedColor,
+                        "--size-muted": `${tool === "erase" ? "#3A3A3A" : selectedColor}55`,
+                        "--size-progress": `${((brushSize - 2) / 16) * 100}%`,
+                      } as React.CSSProperties}
+                    />
+                  </div>
+                  <div className="flex shrink-0 items-center justify-end gap-0">
+                    <div className="flex h-7 w-5 items-center justify-end">
+                      <span
+                        className={cn("block rounded-full", tool === "erase" ? "bg-charcoal/20" : "border border-charcoal/15")}
+                        style={{
+                          width: `${Math.min(activePreviewSize, 22)}px`,
+                          height: `${Math.min(activePreviewSize, 22)}px`,
+                          backgroundColor: tool === "erase" ? undefined : selectedColor,
+                        }}
+                        aria-hidden="true"
+                      />
+                    </div>
+                    <span className="w-7 text-right font-mono text-xs text-charcoal/55">
+                      {brushSize}px
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
