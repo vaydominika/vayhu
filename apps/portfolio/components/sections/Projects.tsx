@@ -301,16 +301,17 @@ export const Projects: React.FC = () => {
           </ScrollRevealItem>
 
           {/* Project 2 */}
-          <ScrollRevealItem delay={150} className="flex w-full max-w-xl flex-col h-full lg:translate-y-4 group relative pt-6 mx-auto lg:max-w-none">
+          <ScrollRevealItem delay={150} className="flex w-full max-w-xl flex-col h-full lg:translate-y-4 group/project2 relative pt-6 mx-auto lg:max-w-none">
             
             {/* Blue card behind */}
-            <div className="absolute top-20 -bottom-5 left-1/2 translate-y-8 -translate-x-1/2 w-[98%] bg-teal/80 border border-[#9BBAB4]/50 shadow-scrapbook-sm rounded-sm z-0 rotate-1 transition-[transform] duration-500 ease-in-out group-hover:translate-y-5 group-hover:rotate-2 lg:top-12 lg:bottom-12 lg:w-[98%]"></div>
+            <div className="absolute top-20 -bottom-5 left-1/2 translate-y-8 -translate-x-1/2 w-[98%] bg-teal/80 border border-[#9BBAB4]/50 shadow-scrapbook-sm rounded-sm z-0 rotate-1 transition-[transform] duration-500 ease-in-out group-hover/project2:translate-y-5 group-hover/project2:rotate-2 lg:top-12 lg:bottom-12 lg:w-[98%]"></div>
 
+            <div className="relative z-10 transition-[transform] duration-500 ease-in-out group-hover/project2:-translate-y-1.5 group-hover/project2:rotate-1">
             <PaperCard 
               variant="polaroid" 
-              rotation="rotate-1" 
+              rotation="none" 
               pushpin={false}
-              className="flex flex-col justify-between z-10 min-h-[440px] pt-12 relative overflow-visible"
+              className="flex flex-col justify-between min-h-[440px] pt-12 relative overflow-visible rotate-1 hover:translate-y-0 hover:rotate-1 hover:shadow-scrapbook-md"
             >
               {/* Button holding the card - colored pink using CSS mask */}
               <div className="absolute top-2 left-1/2 -translate-x-1/2 w-8 h-8 z-40 drop-shadow-sm pointer-events-none select-none">
@@ -375,7 +376,7 @@ export const Projects: React.FC = () => {
                       <span 
                         key={tag} 
                         style={{ transitionDelay: `${idx * 80}ms` }}
-                        className="text-[10px] font-mono bg-[#FCFAF2] px-2 py-0.5 border border-charcoal/10 rounded-sm text-charcoal/70 tag-transition group-hover:-translate-y-0.5"
+                        className="text-[10px] font-mono bg-[#FCFAF2] px-2 py-0.5 border border-charcoal/10 rounded-sm text-charcoal/70 tag-transition group-hover/project2:-translate-y-0.5"
                       >
                         {tag}
                       </span>
@@ -392,19 +393,21 @@ export const Projects: React.FC = () => {
                 </div>
               </div>
             </PaperCard>
+            </div>
           </ScrollRevealItem>
 
           {/* Project 3 */}
-          <ScrollRevealItem delay={300} className="flex w-full max-w-xl flex-col h-full group relative pt-6 mx-auto lg:max-w-none">
+          <ScrollRevealItem delay={300} className="flex w-full max-w-xl flex-col h-full group/project3 relative pt-6 mx-auto lg:max-w-none">
             
             {/* Duplicated backing card slightly right and bottom */}
-            <div className="absolute inset-2 bg-white border border-[#E0DBCF] shadow-scrapbook-sm rounded-sm z-0 translate-x-4 translate-y-4 -rotate-1 transition-[transform] duration-500 ease-in-out group-hover:translate-x-3 group-hover:translate-y-3"></div>
+            <div className="absolute inset-2 bg-white border border-[#E0DBCF] shadow-scrapbook-sm rounded-sm z-0 translate-x-4 translate-y-4 -rotate-1 transition-[transform] duration-500 ease-in-out group-hover/project3:translate-x-3 group-hover/project3:translate-y-3"></div>
 
+            <div className="relative z-10 transition-[transform] duration-500 ease-in-out group-hover/project3:-translate-y-1.5 group-hover/project3:-rotate-1">
             <PaperCard 
               variant="polaroid" 
-              rotation="-rotate-1" 
+              rotation="none" 
               tape="none" 
-              className="flex-1 flex flex-col justify-between relative z-10 pt-12"
+              className="flex-1 flex flex-col justify-between relative z-10 pt-12 -rotate-1 hover:translate-y-0 hover:-rotate-1 hover:shadow-scrapbook-md"
             >
               {/* Tape-2.png holding the card top right */}
               <div className="absolute top-6 right-40 w-30 h-11 z-40 -rotate-50 pointer-events-none select-none">
@@ -454,7 +457,7 @@ export const Projects: React.FC = () => {
                       <span 
                         key={tag} 
                         style={{ transitionDelay: `${idx * 80}ms` }}
-                        className="text-[10px] font-mono bg-[#FCFAF2] px-2 py-0.5 border border-charcoal/10 rounded-sm text-charcoal/70 tag-transition group-hover:-translate-y-0.5"
+                        className="text-[10px] font-mono bg-[#FCFAF2] px-2 py-0.5 border border-charcoal/10 rounded-sm text-charcoal/70 tag-transition group-hover/project3:-translate-y-0.5"
                       >
                         {tag}
                       </span>
@@ -477,6 +480,7 @@ export const Projects: React.FC = () => {
                 color="bg-sage"
               />
             </PaperCard>
+            </div>
           </ScrollRevealItem>
 
         </div>

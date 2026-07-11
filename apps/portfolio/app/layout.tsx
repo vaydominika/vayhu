@@ -22,8 +22,33 @@ const handwritingFont = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Vay | Frontend Developer & UI/UX Enthusiast",
-  description: "A cozy digital scrapbook portfolio showing my works, skills, and creative journey.",
+  metadataBase: new URL("https://vay.hu"),
+  title: "Vay Dominika",
+  description: "A cozy scrapbook portfolio by Vay Dominika, frontend developer and UI/UX enthusiast.",
+  icons: {
+    icon: "/assets/icons/vayicon.svg",
+  },
+  openGraph: {
+    title: "Vay Dominika",
+    description: "A cozy scrapbook portfolio by Vay Dominika, frontend developer and UI/UX enthusiast.",
+    url: "https://vay.hu",
+    siteName: "Vay Dominika",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Vay Dominika portfolio preview",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Vay Dominika",
+    description: "A cozy scrapbook portfolio by Vay Dominika, frontend developer and UI/UX enthusiast.",
+    images: ["/opengraph-image"],
+  },
 };
 
 export default function RootLayout({

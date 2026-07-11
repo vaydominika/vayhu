@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Sparkles } from "lucide-react";
 import { PaperCard } from "@/components/PaperCard";
@@ -44,6 +44,7 @@ export const Hero: React.FC<HeroProps> = ({
 }) => {
   const sectionRef = useRef<HTMLElement | null>(null);
   const frameRef = useRef<number | null>(null);
+  const [isCollageHovered, setIsCollageHovered] = useState(false);
 
   const setParallaxVars = (x: number, y: number) => {
     const section = sectionRef.current;
@@ -79,6 +80,13 @@ export const Hero: React.FC<HeroProps> = ({
   const handleMouseLeave = () => {
     queueParallaxUpdate(0, 0);
   };
+
+  const collageHoverVars = {
+    "--hero-grid-hover-transform": isCollageHovered ? "translate3d(0, -8px, 0) rotate(-3deg)" : "translate3d(0, 0, 0) rotate(0deg)",
+    "--hero-torn-hover-transform": isCollageHovered ? "translate3d(0, -4px, 0) rotate(2deg)" : "translate3d(0, 0, 0) rotate(0deg)",
+    "--hero-card-hover-transform": isCollageHovered ? "translate3d(0, -12px, 0)" : "translate3d(0, 0, 0)",
+    "--hero-note-hover-transform": isCollageHovered ? "translate3d(0, -8px, 0) rotate(6deg)" : "translate3d(0, 0, 0) rotate(0deg)",
+  } as React.CSSProperties;
 
   useEffect(() => {
     setParallaxVars(0, 0);
@@ -203,33 +211,36 @@ export const Hero: React.FC<HeroProps> = ({
         className={`lg:col-span-5 relative mx-auto flex w-full max-w-[430px] justify-center items-center py-6 group/collage transition-[opacity,transform] duration-800 ease-out delay-[600ms] transform lg:max-w-none ${
           isMounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
         }`}
+        style={collageHoverVars}
+        onMouseEnter={() => setIsCollageHovered(true)}
+        onMouseLeave={() => setIsCollageHovered(false)}
       >
         
         {/* Grid Pattern Sheet behind polaroid */}
         <div 
-          className="absolute w-[80%] h-[105%] bg-white grid-lines border border-[#D5D0C2]/20 rounded-lg shadow-scrapbook-sm -z-10 transition-hero-smooth group-hover/collage:-translate-y-2 group-hover/collage:-rotate-3 will-change-transform"
-          style={{ transform: "var(--hero-grid-transform, translate3d(0, 0, 0) rotate(-6deg))" }}
+          className="absolute w-[80%] h-[105%] bg-white grid-lines border border-[#D5D0C2]/20 rounded-lg shadow-scrapbook-sm -z-10 transition-hero-smooth will-change-transform"
+          style={{ transform: "var(--hero-grid-transform, translate3d(0, 0, 0) rotate(-6deg)) var(--hero-grid-hover-transform, translate3d(0, 0, 0) rotate(0deg))" }}
         ></div>
         
         {/* Torn green sheet behind */}
         <div 
-          className="absolute w-[85%] h-[98%] bg-sage/35 border border-sage/40 rounded-sm -z-20 transition-hero-smooth group-hover/collage:-translate-y-1 group-hover/collage:rotate-2 will-change-transform"
+          className="absolute w-[85%] h-[98%] bg-sage/35 border border-sage/40 rounded-sm -z-20 transition-hero-smooth will-change-transform"
           style={{
-            transform: "var(--hero-torn-transform, translate3d(0, 0, 0) rotate(3deg))",
+            transform: "var(--hero-torn-transform, translate3d(0, 0, 0) rotate(3deg)) var(--hero-torn-hover-transform, translate3d(0, 0, 0) rotate(0deg))",
             clipPath: "polygon(0% 6%, 3% 8%, 6% 5%, 9% 9%, 13% 6%, 16% 8%, 20% 5%, 23% 9%, 27% 6%, 30% 8%, 34% 5%, 37% 9%, 40% 6%, 44% 8%, 48% 5%, 51% 9%, 55% 6%, 58% 8%, 62% 5%, 65% 9%, 68% 6%, 72% 8%, 76% 5%, 80% 9%, 84% 5%, 87% 9%, 90% 6%, 94% 8%, 97% 5%, 100% 8%, 100% 92%, 97% 95%, 94% 91%, 90% 94%, 87% 92%, 84% 96%, 80% 92%, 76% 95%, 72% 91%, 68% 94%, 65% 91%, 62% 95%, 58% 92%, 55% 94%, 51% 91%, 48% 95%, 44% 92%, 40% 94%, 37% 91%, 34% 95%, 30% 92%, 27% 94%, 23% 91%, 20% 95%, 16% 92%, 13% 94%, 9% 91%, 6% 95%, 3% 92%, 0% 94%)"
           }}
         ></div>
         
         {/* Main Polaroid Card */}
         <div
-          className="w-[85%] sm:w-[320px] z-10 transition-hero-smooth group-hover/collage:-translate-y-3 will-change-transform"
-          style={{ transform: "var(--hero-card-transform, translate3d(0, 0, 0) rotate(-1deg))" }}
+          className="w-[85%] sm:w-[320px] z-10 transition-hero-smooth will-change-transform"
+          style={{ transform: "var(--hero-card-transform, translate3d(0, 0, 0) rotate(-1deg)) var(--hero-card-hover-transform, translate3d(0, 0, 0))" }}
         >
           <PaperCard 
             variant="polaroid" 
             rotation="none" 
             tape="none" 
-            className="w-full shadow-scrapbook-md border border-[#D5D0C2]/40"
+            className="w-full shadow-scrapbook-md border border-[#D5D0C2]/40 hover:translate-y-0 hover:rotate-0 hover:shadow-scrapbook-md"
           >
             <div className="absolute -top-5 left-1/2 -translate-x-1/2 -rotate-2 w-32 h-10 z-30 pointer-events-none select-none">
               <Image 
@@ -255,13 +266,13 @@ export const Hero: React.FC<HeroProps> = ({
 
         {/* Yellow Sticky Note layered on the bottom right corner */}
         <div
-          className="absolute bottom-3 right-0 sm:right-[2px] z-20 transition-hero-smooth group-hover/collage:-translate-y-2 group-hover/collage:rotate-6 will-change-transform"
-          style={{ transform: "var(--hero-note-transform, translate3d(0, 0, 0) rotate(3deg))" }}
+          className="absolute bottom-3 right-0 sm:right-[2px] z-20 transition-hero-smooth will-change-transform"
+          style={{ transform: "var(--hero-note-transform, translate3d(0, 0, 0) rotate(3deg)) var(--hero-note-hover-transform, translate3d(0, 0, 0) rotate(0deg))" }}
         >
           <PaperCard 
             variant="sticky-yellow" 
             rotation="none" 
-            className="w-24 h-24 sm:w-[112px] sm:h-[112px] lg:w-[120px] lg:h-[120px] text-center border-b-2 border-r-2"
+            className="w-24 h-24 sm:w-[112px] sm:h-[112px] lg:w-[120px] lg:h-[120px] text-center border-b-2 border-r-2 hover:translate-y-0 hover:rotate-0 hover:shadow-scrapbook-sm"
           >
             <div className="font-serif text-sm sm:text-base font-semibold leading-relaxed text-charcoal/90 animate-fade-in">
               welcome!
