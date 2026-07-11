@@ -243,7 +243,33 @@
 
   /* Scrapbook transition defaults */
   .transition-cozy {
-    transition: all 0.75s cubic-bezier(0.25, 1, 0.5, 1);
+    transition-property: transform, opacity, box-shadow, background-color, border-color, color;
+    transition-duration: 0.75s;
+    transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
+  }
+
+  .will-change-transform {
+    will-change: transform;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .animate-float-ambient,
+  .animate-float-ambient-slow,
+  .animate-paper-tear,
+  .animate-paper-spin,
+  .animate-paper-slide,
+  .animate-paper-bounce {
+    animation: none !important;
   }
 }
 

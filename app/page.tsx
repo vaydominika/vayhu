@@ -5,28 +5,16 @@ import { Nav } from "@/components/sections/Nav";
 import { Hero } from "@/components/sections/Hero";
 import { About } from "@/components/sections/About";
 import { Projects } from "@/components/sections/Projects";
+import { DoodleBoard } from "@/components/sections/DoodleBoard";
 import { Contact } from "@/components/sections/Contact";
 import { Doodle } from "@/components/ui/Doodle";
 
 export default function Home() {
   const [isMounted, setIsMounted] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    const { clientX, clientY } = e;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = (clientX - rect.left) / rect.width - 0.5;
-    const y = (clientY - rect.top) / rect.height - 0.5;
-    setMousePos({ x, y });
-  };
-
-  const handleMouseLeave = () => {
-    setMousePos({ x: 0, y: 0 });
-  };
 
   const scrollTo = (id: string) => {
     const element = document.getElementById(id);
@@ -48,9 +36,6 @@ export default function Home() {
         {/* HERO SECTION */}
         <Hero 
           isMounted={isMounted}
-          mousePos={mousePos}
-          handleMouseMove={handleMouseMove}
-          handleMouseLeave={handleMouseLeave}
           scrollTo={scrollTo}
         />
 
@@ -59,6 +44,9 @@ export default function Home() {
 
         {/* PROJECTS SECTION */}
         <Projects />
+
+        {/* DOODLE BOARD SECTION */}
+        <DoodleBoard />
 
         {/* CONTACT SECTION */}
         <Contact />
@@ -69,7 +57,7 @@ export default function Home() {
       <footer className="mt-auto border-t border-[#E6E2D8] bg-[#F3EFE6] px-6 py-6 md:px-12 flex flex-col sm:flex-row items-center justify-between text-xs font-mono text-charcoal/60 gap-4">
         <span>© {new Date().getFullYear()} Vay. Made with Next.js &amp; Tailwind.</span>
         <span className="flex items-center gap-1.5">
-          <span>built with coffee, code, and care</span>
+          <span>made with code, care, and a lot of “just one more tweak”</span>
           <Doodle src="/assets/heart-1.svg" className="w-3.5 h-3.5 animate-pulse" color="bg-pink" />
         </span>
       </footer>

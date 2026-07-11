@@ -5,6 +5,7 @@ import { Image as ImageIcon } from "lucide-react";
 import { PaperCard } from "@/components/PaperCard";
 import { ScrollReveal, ScrollRevealItem } from "@/components/ScrollReveal";
 import { Doodle } from "@/components/ui/Doodle";
+import { cn } from "@/lib/utils";
 
 // Inline icons to keep component self-contained
 const ArrowRightIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
@@ -70,6 +71,15 @@ const HOVER_COLORS = [
   { bg: "hover:bg-[#EAE44D]/25", border: "hover:border-[#EAE44D]", text: "hover:text-amber-700" }
 ];
 
+const INDICATOR_COLORS = [
+  { active: "bg-pink", inactive: "bg-pink/35", hover: "hover:bg-pink/70" },
+  { active: "bg-teal", inactive: "bg-teal/35", hover: "hover:bg-teal/70" },
+  { active: "bg-sage", inactive: "bg-sage/45", hover: "hover:bg-sage/75" },
+  { active: "bg-note-yellow", inactive: "bg-note-yellow/70", hover: "hover:bg-note-yellow" },
+  { active: "bg-note-blue", inactive: "bg-note-blue/70", hover: "hover:bg-note-blue" },
+  { active: "bg-note-green", inactive: "bg-note-green/70", hover: "hover:bg-note-green" },
+];
+
 const TRANSITION_ANIMATIONS = [
   "animate-paper-tear",
   "animate-paper-spin",
@@ -88,6 +98,8 @@ export const Projects: React.FC = () => {
   const [leftColorIndex, setLeftColorIndex] = useState(0);
   const [rightColorIndex, setRightColorIndex] = useState(1);
   const [activeAnimation, setActiveAnimation] = useState("animate-paper-tear");
+  const lightboxImages = projectList[lightbox.projectIndex].images;
+  const hasMultipleLightboxImages = lightboxImages.length > 1;
 
   const randomizeLeftColor = () => {
     const nextIdx = Math.floor(Math.random() * HOVER_COLORS.length);
@@ -107,6 +119,8 @@ export const Projects: React.FC = () => {
   const showPrev = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     const images = projectList[lightbox.projectIndex].images;
+    if (images.length <= 1) return;
+
     setLightbox(prev => ({
       ...prev,
       imageIndex: (prev.imageIndex - 1 + images.length) % images.length
@@ -118,6 +132,8 @@ export const Projects: React.FC = () => {
   const showNext = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     const images = projectList[lightbox.projectIndex].images;
+    if (images.length <= 1) return;
+
     setLightbox(prev => ({
       ...prev,
       imageIndex: (prev.imageIndex + 1) % images.length
@@ -135,6 +151,16 @@ export const Projects: React.FC = () => {
     setLightbox({ isOpen: true, projectIndex, imageIndex: 0 });
   };
 
+  const showImage = (imageIndex: number) => {
+    if (imageIndex === lightbox.imageIndex) return;
+
+    triggerRandomAnimation();
+    setLightbox((prev) => ({
+      ...prev,
+      imageIndex,
+    }));
+  };
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -142,13 +168,13 @@ export const Projects: React.FC = () => {
   useEffect(() => {
     if (!lightbox.isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") showPrev();
-      if (e.key === "ArrowRight") showNext();
+      if (hasMultipleLightboxImages && e.key === "ArrowLeft") showPrev();
+      if (hasMultipleLightboxImages && e.key === "ArrowRight") showNext();
       if (e.key === "Escape") closeLightbox();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [lightbox.isOpen, lightbox.projectIndex]);
+  }, [hasMultipleLightboxImages, lightbox.isOpen, lightbox.projectIndex]);
 
   return (
     <section id="projects" className="scroll-mt-24 relative isolate">
@@ -180,12 +206,16 @@ export const Projects: React.FC = () => {
       />
 
       <ScrollReveal>
+        <div className="mb-8 flex items-center gap-2 font-mono text-xs uppercase tracking-[0.22em] text-charcoal/45">
+          <ImageIcon className="h-3.5 w-3.5" />
+          selected work
+        </div>
         
         {/* Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 pt-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 pt-4">
           
           {/* Project 1 with Projects Badge overlapping */}
-          <ScrollRevealItem delay={0} className="flex flex-col h-full group relative pt-6">
+          <ScrollRevealItem delay={0} className="flex w-full max-w-xl flex-col h-full group relative pt-6 mx-auto lg:max-w-none">
             
             <PaperCard 
               variant="polaroid" 
@@ -261,7 +291,7 @@ export const Projects: React.FC = () => {
                     href={projectList[0].url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-1.5 bg-white border border-charcoal/10 rounded-full hover:bg-sage/20 hover:border-sage hover:text-sage hover:scale-105 active:scale-95 transition-all text-charcoal flex items-center justify-center shrink-0 shadow-sm cursor-pointer"
+                    className="p-1.5 bg-white border border-charcoal/10 rounded-full hover:bg-sage/20 hover:border-sage hover:text-sage hover:scale-105 active:scale-95 transition-[transform,background-color,border-color,color] text-charcoal flex items-center justify-center shrink-0 shadow-sm cursor-pointer"
                   >
                     <ArrowRightIcon className="w-3.5 h-3.5" />
                   </a>
@@ -271,16 +301,16 @@ export const Projects: React.FC = () => {
           </ScrollRevealItem>
 
           {/* Project 2 */}
-          <ScrollRevealItem delay={150} className="flex flex-col h-full md:translate-y-4 group relative pt-6">
+          <ScrollRevealItem delay={150} className="flex w-full max-w-xl flex-col h-full lg:translate-y-4 group relative pt-6 mx-auto lg:max-w-none">
             
             {/* Blue card behind */}
-            <div className="absolute top-20 -bottom-px left-1/2 translate-y-8 -translate-x-1/2 w-[98%] bg-teal/80 border border-[#9BBAB4]/50 shadow-scrapbook-sm rounded-sm z-0 rotate-1 transition-all duration-500 ease-in-out group-hover:translate-y-5 group-hover:rotate-2 md:top-12 md:bottom-12 md:w-[98%]"></div>
+            <div className="absolute top-20 -bottom-5 left-1/2 translate-y-8 -translate-x-1/2 w-[98%] bg-teal/80 border border-[#9BBAB4]/50 shadow-scrapbook-sm rounded-sm z-0 rotate-1 transition-[transform] duration-500 ease-in-out group-hover:translate-y-5 group-hover:rotate-2 lg:top-12 lg:bottom-12 lg:w-[98%]"></div>
 
             <PaperCard 
               variant="polaroid" 
               rotation="rotate-1" 
               pushpin={false}
-              className=" flex flex-col justify-between z-10 h-[440px] pt-12 relative overflow-visible"
+              className="flex flex-col justify-between z-10 min-h-[440px] pt-12 relative overflow-visible"
             >
               {/* Button holding the card - colored pink using CSS mask */}
               <div className="absolute top-2 left-1/2 -translate-x-1/2 w-8 h-8 z-40 drop-shadow-sm pointer-events-none select-none">
@@ -297,7 +327,7 @@ export const Projects: React.FC = () => {
               </div>
 
               {/* bottom-ripped-2.png at the bottom of the card */}
-              <div className="absolute bottom-[-6px] left-0 right-0 h-6 pointer-events-none select-none z-20">
+              <div className="absolute bottom-[-10px] left-0 right-0 h-9 translate-x-0.5 pointer-events-none select-none z-20 lg:bottom-[-6px] lg:h-6 lg:translate-x-0">
                 <Image 
                   src="/assets/bottom-ripped-2.png" 
                   alt="Ripped bottom edge" 
@@ -355,7 +385,7 @@ export const Projects: React.FC = () => {
                     href={projectList[1].url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-1.5 bg-white border border-charcoal/10 rounded-full hover:bg-sage/20 hover:border-sage hover:text-sage hover:scale-105 active:scale-95 transition-all text-charcoal flex items-center justify-center shrink-0 shadow-sm cursor-pointer"
+                    className="p-1.5 bg-white border border-charcoal/10 rounded-full hover:bg-sage/20 hover:border-sage hover:text-sage hover:scale-105 active:scale-95 transition-[transform,background-color,border-color,color] text-charcoal flex items-center justify-center shrink-0 shadow-sm cursor-pointer"
                   >
                     <ArrowRightIcon className="w-3.5 h-3.5" />
                   </a>
@@ -365,10 +395,10 @@ export const Projects: React.FC = () => {
           </ScrollRevealItem>
 
           {/* Project 3 */}
-          <ScrollRevealItem delay={300} className="flex flex-col h-full group relative pt-6">
+          <ScrollRevealItem delay={300} className="flex w-full max-w-xl flex-col h-full group relative pt-6 mx-auto lg:max-w-none">
             
             {/* Duplicated backing card slightly right and bottom */}
-            <div className="absolute inset-2 bg-white border border-[#E0DBCF] shadow-scrapbook-sm rounded-sm z-0 translate-x-4 translate-y-4 -rotate-1 transition-all duration-500 ease-in-out group-hover:translate-x-3 group-hover:translate-y-3"></div>
+            <div className="absolute inset-2 bg-white border border-[#E0DBCF] shadow-scrapbook-sm rounded-sm z-0 translate-x-4 translate-y-4 -rotate-1 transition-[transform] duration-500 ease-in-out group-hover:translate-x-3 group-hover:translate-y-3"></div>
 
             <PaperCard 
               variant="polaroid" 
@@ -434,7 +464,7 @@ export const Projects: React.FC = () => {
                     href={projectList[2].url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-1.5 bg-white border border-charcoal/10 rounded-full hover:bg-sage/20 hover:border-sage hover:text-sage hover:scale-105 active:scale-95 transition-all text-charcoal flex items-center justify-center shrink-0 shadow-sm cursor-pointer"
+                    className="p-1.5 bg-white border border-charcoal/10 rounded-full hover:bg-sage/20 hover:border-sage hover:text-sage hover:scale-105 active:scale-95 transition-[transform,background-color,border-color,color] text-charcoal flex items-center justify-center shrink-0 shadow-sm cursor-pointer"
                   >
                     <ArrowRightIcon className="w-3.5 h-3.5" />
                   </a>
@@ -489,36 +519,56 @@ export const Projects: React.FC = () => {
                   priority
                 />
               </div>
-              
-              {/* Scrapbook style handwritten page counter */}
-              <div className="absolute bottom-3 right-4 bg-white/80 backdrop-blur-xs px-2.5 py-1 rounded-sm border border-charcoal/10 font-handwriting text-base text-charcoal/80 shadow-scrapbook-sm select-none z-10">
-                {lightbox.imageIndex + 1} / {projectList[lightbox.projectIndex].images.length}
-              </div>
             </div>
 
+            {hasMultipleLightboxImages && (
+              <div className="mt-4 flex items-center justify-center gap-1.5">
+                {lightboxImages.map((image, index) => (
+                  <button
+                    key={image}
+                    type="button"
+                    onClick={() => showImage(index)}
+                    className={cn(
+                      "h-2.5 rounded-full border border-charcoal/10 transition-[width,background-color] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-charcoal",
+                      INDICATOR_COLORS[index % INDICATOR_COLORS.length].hover,
+                      index === lightbox.imageIndex
+                        ? `w-5 ${INDICATOR_COLORS[index % INDICATOR_COLORS.length].active}`
+                        : `w-2.5 ${INDICATOR_COLORS[index % INDICATOR_COLORS.length].inactive}`
+                    )}
+                    aria-label={`Show image ${index + 1}`}
+                    aria-current={index === lightbox.imageIndex ? "true" : undefined}
+                  />
+                ))}
+              </div>
+            )}
+
             {/* Polaroid Bottom Signature Label */}
-            <div className="mt-6 font-handwriting text-center text-4xl font-bold text-charcoal/90 tracking-tight leading-none">
+            <div className="mt-3 font-handwriting text-center text-4xl font-bold text-charcoal/90 tracking-tight leading-none">
               {projectList[lightbox.projectIndex].title}
             </div>
 
             {/* Custom Navigation buttons */}
-            <button 
-              onClick={showPrev}
-              onMouseEnter={randomizeLeftColor}
-              className={`absolute left-[-20px] md:left-[-60px] top-1/2 -translate-y-1/2 p-3 bg-white border border-charcoal/10 rounded-full hover:scale-105 active:scale-95 transition-all text-charcoal flex items-center justify-center shadow-lg z-50 cursor-pointer w-12 h-12 ${HOVER_COLORS[leftColorIndex].bg} ${HOVER_COLORS[leftColorIndex].border} ${HOVER_COLORS[leftColorIndex].text}`}
-              aria-label="Previous image"
-            >
-              <ArrowLeftIcon className="w-5 h-5" />
-            </button>
+            {hasMultipleLightboxImages && (
+              <>
+                <button 
+                  onClick={showPrev}
+                  onMouseEnter={randomizeLeftColor}
+                  className={`absolute left-[-20px] md:left-[-60px] top-1/2 -translate-y-1/2 p-3 bg-white border border-charcoal/10 rounded-full hover:scale-105 active:scale-95 transition-[transform,background-color,border-color,color] text-charcoal flex items-center justify-center shadow-lg z-50 cursor-pointer w-12 h-12 ${HOVER_COLORS[leftColorIndex].bg} ${HOVER_COLORS[leftColorIndex].border} ${HOVER_COLORS[leftColorIndex].text}`}
+                  aria-label="Previous image"
+                >
+                  <ArrowLeftIcon className="w-5 h-5" />
+                </button>
 
-            <button 
-              onClick={showNext}
-              onMouseEnter={randomizeRightColor}
-              className={`absolute right-[-20px] md:right-[-60px] top-1/2 -translate-y-1/2 p-3 bg-white border border-charcoal/10 rounded-full hover:scale-105 active:scale-95 transition-all text-charcoal flex items-center justify-center shadow-lg z-50 cursor-pointer w-12 h-12 ${HOVER_COLORS[rightColorIndex].bg} ${HOVER_COLORS[rightColorIndex].border} ${HOVER_COLORS[rightColorIndex].text}`}
-              aria-label="Next image"
-            >
-              <ArrowRightIcon className="w-5 h-5" />
-            </button>
+                <button 
+                  onClick={showNext}
+                  onMouseEnter={randomizeRightColor}
+                  className={`absolute right-[-20px] md:right-[-60px] top-1/2 -translate-y-1/2 p-3 bg-white border border-charcoal/10 rounded-full hover:scale-105 active:scale-95 transition-[transform,background-color,border-color,color] text-charcoal flex items-center justify-center shadow-lg z-50 cursor-pointer w-12 h-12 ${HOVER_COLORS[rightColorIndex].bg} ${HOVER_COLORS[rightColorIndex].border} ${HOVER_COLORS[rightColorIndex].text}`}
+                  aria-label="Next image"
+                >
+                  <ArrowRightIcon className="w-5 h-5" />
+                </button>
+              </>
+            )}
 
           </div>
         </div>,

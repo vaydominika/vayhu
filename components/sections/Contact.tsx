@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ArrowUpRight, Send } from "lucide-react";
+import { ArrowUpRight, Mail, Send } from "lucide-react";
 import { ScrollReveal, ScrollRevealItem } from "@/components/ScrollReveal";
 import { Doodle } from "@/components/ui/Doodle";
 
@@ -52,7 +52,10 @@ export const Contact: React.FC = () => {
       <ScrollReveal>
         <div className="grid gap-12 md:grid-cols-12 md:gap-10 lg:gap-14">
           <ScrollRevealItem delay={0} className="md:col-span-4">
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-charcoal/55">connect</p>
+            <p className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.22em] text-charcoal/45">
+              <Mail className="h-3.5 w-3.5" />
+              say hello
+            </p>
             <h3 className="mt-3 max-w-sm font-serif text-4xl font-bold leading-tight tracking-tight text-charcoal md:text-5xl">
               Have a good idea?
               <br />

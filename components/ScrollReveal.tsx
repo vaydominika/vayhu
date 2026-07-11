@@ -48,7 +48,7 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
       <div
         ref={containerRef}
         className={cn(
-          "transition-all cubic-bezier(0.25, 1, 0.5, 1)",
+          "transition-[opacity,transform] cubic-bezier(0.25, 1, 0.5, 1) motion-reduce:transition-none",
           isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6",
           className
         )}
@@ -83,7 +83,7 @@ export const ScrollRevealItem: React.FC<ScrollRevealItemProps> = ({
     <div
       id={id}
       className={cn(
-        "transition-all cubic-bezier(0.25, 1, 0.5, 1)",
+        "transition-[opacity,transform] cubic-bezier(0.25, 1, 0.5, 1) motion-reduce:transition-none",
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6",
         className
       )}

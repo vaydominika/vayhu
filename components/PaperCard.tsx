@@ -128,7 +128,7 @@ export const PaperCard: React.FC<PaperCardProps> = ({
     return (
       <div
         className={cn(
-          "absolute h-7 w-20 px-2 py-0.5 border border-dashed text-[10px] font-mono tracking-widest uppercase select-none flex items-center justify-center pointer-events-none z-30 transition-all duration-500",
+          "absolute h-7 w-20 px-2 py-0.5 border border-dashed text-[10px] font-mono tracking-widest uppercase select-none flex items-center justify-center pointer-events-none z-30 transition-[transform,opacity,background-color,border-color] duration-500 motion-reduce:transition-none",
           tapeColorStyles[tapeColor],
           angleClass,
           posClass
@@ -148,7 +148,7 @@ export const PaperCard: React.FC<PaperCardProps> = ({
     <div
       style={inlineStyles}
       className={cn(
-        "relative transition-cozy hover:translate-y-[-6px] hover:shadow-scrapbook-lg shadow-scrapbook-md rounded-sm",
+        "relative transition-cozy hover:translate-y-[-6px] hover:shadow-scrapbook-lg shadow-scrapbook-md rounded-sm motion-reduce:transition-none",
         rotationClasses[rotation],
         resolvedVariantClasses,
         dense && "dense",

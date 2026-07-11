@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import { UserRound } from "lucide-react";
 import { PaperCard } from "@/components/PaperCard";
 import { ScrollReveal, ScrollRevealItem } from "@/components/ScrollReveal";
 import { Doodle } from "@/components/ui/Doodle";
@@ -41,7 +42,8 @@ const getDurationText = (start: Date, end: Date) => {
 };
 
 export const About: React.FC<AboutProps> = ({ scrollTo }) => {
-  const [mousePos, setMousePos] = React.useState({ x: 0, y: 0 });
+  const aboutCardRef = React.useRef<HTMLDivElement | null>(null);
+  const frameRef = React.useRef<number | null>(null);
   const [today, setToday] = React.useState<Date | null>(null);
 
   // State to hold current hover animation class for each of the 4 sticky notes
@@ -71,20 +73,50 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
     setCardHovers(prev => ({ ...prev, [i]: choice }));
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    const { clientX, clientY } = e;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = (clientX - rect.left) / rect.width - 0.5;
-    const y = (clientY - rect.top) / rect.height - 0.5;
-    setMousePos({ x, y });
+  const setParallaxVars = (x: number, y: number) => {
+    const card = aboutCardRef.current;
+    if (!card) return;
+
+    card.style.setProperty("--about-badge-transform", `translate3d(${x * 6}px, ${y * 6}px, 0) rotate(-2.5deg)`);
+    card.style.setProperty("--about-tape-transform", `translate3d(${x * 9}px, ${y * 9}px, 0) rotate(-35deg)`);
+    card.style.setProperty("--about-card-transform", `translate3d(${x * 2}px, ${y * 2}px, 0) rotate(-1deg)`);
+  };
+
+  const queueParallaxUpdate = (x: number, y: number) => {
+    if (frameRef.current !== null) {
+      cancelAnimationFrame(frameRef.current);
+    }
+
+    frameRef.current = requestAnimationFrame(() => {
+      frameRef.current = null;
+      setParallaxVars(x, y);
+    });
+  };
+
+  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width - 0.5;
+    const y = (event.clientY - rect.top) / rect.height - 0.5;
+
+    queueParallaxUpdate(x, y);
   };
 
   const handleMouseLeave = () => {
-    setMousePos({ x: 0, y: 0 });
+    queueParallaxUpdate(0, 0);
   };
 
   React.useEffect(() => {
     setToday(new Date());
+  }, []);
+
+  React.useEffect(() => {
+    setParallaxVars(0, 0);
+
+    return () => {
+      if (frameRef.current !== null) {
+        cancelAnimationFrame(frameRef.current);
+      }
+    };
   }, []);
 
   return (
@@ -125,6 +157,10 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
       />
 
       <ScrollReveal>
+        <div className="mb-8 flex items-center gap-2 font-mono text-xs uppercase tracking-[0.22em] text-charcoal/45">
+          <UserRound className="h-3.5 w-3.5" />
+          little intro
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-8">
           
           {/* About Card Left */}
@@ -133,6 +169,7 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
             className="lg:col-span-6 relative mt-4 group/aboutcard flex flex-col h-full"
           >
             <div
+              ref={aboutCardRef}
               className="w-full h-full relative flex flex-col"
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
@@ -140,10 +177,8 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
             
             {/* Scrapbook Tab Header using badge-3.svg */}
             <div 
-              className="absolute -top-25 left-2 w-45 h-45 z-30 select-none flex items-center justify-center transition-cozy group-hover/aboutcard:-translate-y-1"
-              style={{
-                transform: `translate(${mousePos.x * 6}px, ${mousePos.y * 6}px) rotate(-2.5deg)`
-              }}
+              className="absolute -top-25 left-2 w-45 h-45 z-30 select-none flex items-center justify-center transition-cozy group-hover/aboutcard:-translate-y-1 will-change-transform"
+              style={{ transform: "var(--about-badge-transform, translate3d(0, 0, 0) rotate(-2.5deg))" }}
             >
               <Doodle 
                 src="/assets/badge-3.svg" 
@@ -158,10 +193,8 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
 
             {/* Blue tape piece holding the tab */}
             <div 
-              className="absolute -top-10 -left-3 w-24 h-8 z-40 pointer-events-none select-none transition-cozy group-hover/aboutcard:-translate-y-2"
-              style={{
-                transform: `translate(${mousePos.x * 9}px, ${mousePos.y * 9}px) rotate(-35deg)`
-              }}
+              className="absolute -top-10 -left-3 w-24 h-8 z-40 pointer-events-none select-none transition-cozy group-hover/aboutcard:-translate-y-2 will-change-transform"
+              style={{ transform: "var(--about-tape-transform, translate3d(0, 0, 0) rotate(-35deg))" }}
             >
               <Image 
                 src="/assets/tape-1.png" 
@@ -172,10 +205,8 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
             </div>
 
             <div
-              style={{
-                transform: `translate(${mousePos.x * 2}px, ${mousePos.y * 2}px) rotate(-1deg)`
-              }}
-              className="transition-cozy flex-1 h-full"
+              style={{ transform: "var(--about-card-transform, translate3d(0, 0, 0) rotate(-1deg))" }}
+              className="transition-cozy flex-1 h-full will-change-transform"
             >
               <PaperCard variant="ruled" rotation="none" className="p-1 h-full pt-8">
                 <div className="space-y-4 font-handwriting text-2xl md:text-2xl font-bold text-charcoal/90 leading-relaxed tracking-tighter mt-4">
@@ -195,29 +226,29 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
             </div>
           </ScrollRevealItem>
 
-          <ScrollRevealItem delay={150} className="lg:col-span-3 grid grid-cols-2 gap-4 h-full mt-4 items-center">
+          <ScrollRevealItem delay={150} className="lg:col-span-3 grid grid-cols-2 gap-4 h-full mt-4 items-center sm:mx-auto sm:max-w-md lg:mx-0 lg:max-w-none">
             
             <div onMouseEnter={() => handleCardMouseEnter(0)}>
-              <PaperCard variant="sticky-pink ruled" dense={true} lineColor="#E5CBD6" rotation="rotate-2" className={cn("h-28 w-28 flex flex-col justify-center items-center text-center p-4 relative overflow-visible mx-auto", cardHovers[0])}>
+              <PaperCard variant="sticky-pink ruled" dense={true} lineColor="#E5CBD6" rotation="rotate-2" className={cn("h-28 w-28 flex flex-col justify-center items-center text-center p-4 relative overflow-visible mx-auto sm:h-32 sm:w-32 lg:h-28 lg:w-28", cardHovers[0])}>
                 <span className="text-xl md:text-2xl font-handwriting font-bold tracking-tighter leading-snug">css survivor</span>
                 <Doodle src="/assets/star-2.svg" className="absolute -top-2.5 -right-2.5 w-6 h-6 rotate-12 z-20" color="bg-pink" />
               </PaperCard>
             </div>
             
             <div onMouseEnter={() => handleCardMouseEnter(1)}>
-              <PaperCard variant="sticky-green grid" rotation="-rotate-3" className={cn("h-32 w-32 flex flex-col justify-center items-center text-center p-4 mx-auto", cardHovers[1])}>
+              <PaperCard variant="sticky-green grid" rotation="-rotate-3" className={cn("h-30 w-30 flex flex-col justify-center items-center text-center p-4 mx-auto sm:h-34 sm:w-34 lg:h-32 lg:w-32", cardHovers[1])}>
                 <span className="text-lg md:text-xl font-handwriting font-bold tracking-tighter leading-snug">overthinking specialist</span>
               </PaperCard>
             </div>
             
             <div onMouseEnter={() => handleCardMouseEnter(2)}>
-              <PaperCard variant="sticky-blue" pushpin={true} rotation="-rotate-1" className={cn("h-30 w-30 flex flex-col justify-center items-center text-center p-4 mx-auto", cardHovers[2])}>
+              <PaperCard variant="sticky-blue" pushpin={true} rotation="-rotate-1" className={cn("h-30 w-30 flex flex-col justify-center items-center text-center p-4 mx-auto sm:h-32 sm:w-32 lg:h-30 lg:w-30", cardHovers[2])}>
                 <span className="text-xl md:text-2xl font-handwriting font-bold tracking-tighter leading-snug">99% caffeine</span>
               </PaperCard>
             </div>
             
             <div onMouseEnter={() => handleCardMouseEnter(3)}>
-              <PaperCard variant="sticky-yellow" tornBottom={true} rotation="rotate-2" className={cn("h-34 w-30 flex flex-col justify-center items-center text-center p-4 relative mx-auto", cardHovers[3])}>
+              <PaperCard variant="sticky-yellow" tornBottom={true} rotation="rotate-2" className={cn("h-34 w-30 flex flex-col justify-center items-center text-center p-4 relative mx-auto sm:h-36 sm:w-32 lg:h-34 lg:w-30", cardHovers[3])}>
                 <Doodle src="/assets/strawberry-2.svg" className="absolute top-2 left-2 w-6 h-6 -rotate-12 z-20" color="bg-pink" />
                 <span className="text-xl md:text-2xl font-handwriting font-bold tracking-tighter leading-snug">commit &amp; cry</span>
               </PaperCard>

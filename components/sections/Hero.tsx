@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 import { Sparkles } from "lucide-react";
 import { PaperCard } from "@/components/PaperCard";
@@ -35,21 +35,64 @@ const ArrowRightIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
 
 interface HeroProps {
   isMounted: boolean;
-  mousePos: { x: number; y: number };
-  handleMouseMove: (e: React.MouseEvent) => void;
-  handleMouseLeave: () => void;
   scrollTo: (id: string) => void;
 }
 
 export const Hero: React.FC<HeroProps> = ({
   isMounted,
-  mousePos,
-  handleMouseMove,
-  handleMouseLeave,
   scrollTo,
 }) => {
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const frameRef = useRef<number | null>(null);
+
+  const setParallaxVars = (x: number, y: number) => {
+    const section = sectionRef.current;
+    if (!section) return;
+
+    section.style.setProperty("--hero-grid-transform", `translate3d(${x * -7}px, ${y * -7}px, 0) rotate(-6deg)`);
+    section.style.setProperty("--hero-torn-transform", `translate3d(${x * -4}px, ${y * -4}px, 0) rotate(3deg)`);
+    section.style.setProperty("--hero-card-transform", `translate3d(${x * 5}px, ${y * 5}px, 0) rotate(-1deg)`);
+    section.style.setProperty("--hero-note-transform", `translate3d(${x * 9}px, ${y * 9}px, 0) rotate(3deg)`);
+    section.style.setProperty("--hero-leaf-transform", `translate3d(${x * 3}px, ${y * 3}px, 0) rotate(45deg)`);
+    section.style.setProperty("--hero-strawberry-transform", `translate3d(${x * 2}px, ${y * 2}px, 0) rotate(-12deg)`);
+  };
+
+  const queueParallaxUpdate = (x: number, y: number) => {
+    if (frameRef.current !== null) {
+      cancelAnimationFrame(frameRef.current);
+    }
+
+    frameRef.current = requestAnimationFrame(() => {
+      frameRef.current = null;
+      setParallaxVars(x, y);
+    });
+  };
+
+  const handleMouseMove = (event: React.MouseEvent<HTMLElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width - 0.5;
+    const y = (event.clientY - rect.top) / rect.height - 0.5;
+
+    queueParallaxUpdate(x, y);
+  };
+
+  const handleMouseLeave = () => {
+    queueParallaxUpdate(0, 0);
+  };
+
+  useEffect(() => {
+    setParallaxVars(0, 0);
+
+    return () => {
+      if (frameRef.current !== null) {
+        cancelAnimationFrame(frameRef.current);
+      }
+    };
+  }, []);
+
   return (
-    <section 
+    <section
+      ref={sectionRef}
       id="hero" 
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
@@ -64,10 +107,18 @@ export const Hero: React.FC<HeroProps> = ({
       
       {/* Hero Left Content */}
       <div className="lg:col-span-7 flex flex-col gap-6 items-start">
+        <div
+          className={`flex items-center gap-2 font-mono text-xs uppercase tracking-[0.22em] text-charcoal/45 transition-[opacity,transform] duration-800 ease-out transform ${
+            isMounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
+          }`}
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          home base
+        </div>
         
         {/* Tag Badge */}
         <div 
-          className={`inline-flex items-center gap-1.5 px-3 py-1 bg-sage/20 border border-sage/40 rounded-full text-xs font-medium text-emerald-800/80 shadow-sm transition-all duration-800 ease-out transform ${
+          className={`inline-flex items-center gap-1.5 px-3 py-1 bg-sage/20 border border-sage/40 rounded-full text-xs font-medium text-emerald-800/80 shadow-sm transition-[opacity,transform] duration-800 ease-out transform ${
             isMounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
           }`}
         >
@@ -77,7 +128,7 @@ export const Hero: React.FC<HeroProps> = ({
 
         {/* Title with Hand-drawn Underline */}
         <div 
-          className={`relative transition-all duration-800 ease-out delay-100 transform ${
+          className={`relative transition-[opacity,transform] duration-800 ease-out delay-100 transform ${
             isMounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
           }`}
         >
@@ -92,7 +143,7 @@ export const Hero: React.FC<HeroProps> = ({
 
         {/* Subheading */}
         <h2 
-          className={`text-xl md:text-2xl font-serif text-charcoal/80 font-medium italic mt-2 transition-all duration-800 ease-out delay-200 transform ${
+          className={`text-xl md:text-2xl font-serif text-charcoal/80 font-medium italic mt-2 transition-[opacity,transform] duration-800 ease-out delay-200 transform ${
             isMounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
           }`}
         >
@@ -101,7 +152,7 @@ export const Hero: React.FC<HeroProps> = ({
 
         {/* Intro Description */}
         <p 
-          className={`max-w-xl text-base md:text-lg text-charcoal/80 leading-relaxed font-sans mt-2 transition-all duration-800 ease-out delay-300 transform ${
+          className={`max-w-xl text-base md:text-lg text-charcoal/80 leading-relaxed font-sans mt-2 transition-[opacity,transform] duration-800 ease-out delay-300 transform ${
             isMounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
           }`}
         >
@@ -110,7 +161,7 @@ export const Hero: React.FC<HeroProps> = ({
 
         {/* CTAs */}
         <div 
-          className={`flex flex-wrap items-center gap-4 mt-4 transition-all duration-800 ease-out delay-400 transform ${
+          className={`flex flex-wrap items-center gap-4 mt-4 transition-[opacity,transform] duration-800 ease-out delay-400 transform ${
             isMounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
           }`}
         >
@@ -133,7 +184,7 @@ export const Hero: React.FC<HeroProps> = ({
 
         {/* Small decorative doodles */}
         <div 
-          className={`hidden sm:flex items-center gap-8 mt-6 text-charcoal/40 transition-all duration-800 ease-out delay-500 transform ${
+          className={`hidden sm:flex items-center gap-8 mt-6 text-charcoal/40 transition-[opacity,transform] duration-800 ease-out delay-500 transform ${
             isMounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
           }`}
         >
@@ -149,34 +200,30 @@ export const Hero: React.FC<HeroProps> = ({
 
       {/* Hero Right Collage with mouse parallax */}
       <div 
-        className={`lg:col-span-5 relative flex justify-center items-center py-6 group/collage transition-all duration-800 ease-out delay-[600ms] transform ${
+        className={`lg:col-span-5 relative mx-auto flex w-full max-w-[430px] justify-center items-center py-6 group/collage transition-[opacity,transform] duration-800 ease-out delay-[600ms] transform lg:max-w-none ${
           isMounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
         }`}
       >
         
         {/* Grid Pattern Sheet behind polaroid */}
         <div 
-          className="absolute w-[80%] h-[105%] bg-white grid-lines border border-[#D5D0C2]/20 rounded-lg shadow-scrapbook-sm -z-10 transition-cozy group-hover/collage:-translate-y-2 group-hover/collage:-rotate-3"
-          style={{
-            transform: `translate(${mousePos.x * -7}px, ${mousePos.y * -7}px) rotate(-6deg)`
-          }}
+          className="absolute w-[80%] h-[105%] bg-white grid-lines border border-[#D5D0C2]/20 rounded-lg shadow-scrapbook-sm -z-10 transition-cozy group-hover/collage:-translate-y-2 group-hover/collage:-rotate-3 will-change-transform"
+          style={{ transform: "var(--hero-grid-transform, translate3d(0, 0, 0) rotate(-6deg))" }}
         ></div>
         
         {/* Torn green sheet behind */}
         <div 
-          className="absolute w-[85%] h-[98%] bg-sage/35 border border-sage/40 rounded-sm -z-20 transition-cozy group-hover/collage:-translate-y-1 group-hover/collage:rotate-2"
+          className="absolute w-[85%] h-[98%] bg-sage/35 border border-sage/40 rounded-sm -z-20 transition-cozy group-hover/collage:-translate-y-1 group-hover/collage:rotate-2 will-change-transform"
           style={{
-            transform: `translate(${mousePos.x * -4}px, ${mousePos.y * -4}px) rotate(3deg)`,
+            transform: "var(--hero-torn-transform, translate3d(0, 0, 0) rotate(3deg))",
             clipPath: "polygon(0% 6%, 3% 8%, 6% 5%, 9% 9%, 13% 6%, 16% 8%, 20% 5%, 23% 9%, 27% 6%, 30% 8%, 34% 5%, 37% 9%, 40% 6%, 44% 8%, 48% 5%, 51% 9%, 55% 6%, 58% 8%, 62% 5%, 65% 9%, 68% 6%, 72% 8%, 76% 5%, 80% 9%, 84% 5%, 87% 9%, 90% 6%, 94% 8%, 97% 5%, 100% 8%, 100% 92%, 97% 95%, 94% 91%, 90% 94%, 87% 92%, 84% 96%, 80% 92%, 76% 95%, 72% 91%, 68% 94%, 65% 91%, 62% 95%, 58% 92%, 55% 94%, 51% 91%, 48% 95%, 44% 92%, 40% 94%, 37% 91%, 34% 95%, 30% 92%, 27% 94%, 23% 91%, 20% 95%, 16% 92%, 13% 94%, 9% 91%, 6% 95%, 3% 92%, 0% 94%)"
           }}
         ></div>
         
         {/* Main Polaroid Card */}
         <div
-          className="w-[85%] sm:w-[320px] z-10 transition-cozy group-hover/collage:-translate-y-3"
-          style={{
-            transform: `translate(${mousePos.x * 5}px, ${mousePos.y * 5}px) rotate(-1deg)`
-          }}
+          className="w-[85%] sm:w-[320px] z-10 transition-cozy group-hover/collage:-translate-y-3 will-change-transform"
+          style={{ transform: "var(--hero-card-transform, translate3d(0, 0, 0) rotate(-1deg))" }}
         >
           <PaperCard 
             variant="polaroid" 
@@ -199,7 +246,7 @@ export const Hero: React.FC<HeroProps> = ({
                 alt="Domi" 
                 fill
                 sizes="(max-width: 768px) 100vw, 320px"
-                className="object-cover grayscale-15 hover:grayscale-0 transition-all duration-500 hover:scale-103"
+                className="object-cover grayscale-15 hover:grayscale-0 transition-[filter,transform] duration-500 hover:scale-103"
                 priority
               />
             </div>
@@ -208,15 +255,13 @@ export const Hero: React.FC<HeroProps> = ({
 
         {/* Yellow Sticky Note layered on the bottom right corner */}
         <div
-          className="absolute bottom-3 right-0 sm:right-[2px] z-20 transition-cozy group-hover/collage:-translate-y-2 group-hover/collage:rotate-6"
-          style={{
-            transform: `translate(${mousePos.x * 9}px, ${mousePos.y * 9}px) rotate(3deg)`
-          }}
+          className="absolute bottom-3 right-0 sm:right-[2px] z-20 transition-cozy group-hover/collage:-translate-y-2 group-hover/collage:rotate-6 will-change-transform"
+          style={{ transform: "var(--hero-note-transform, translate3d(0, 0, 0) rotate(3deg))" }}
         >
           <PaperCard 
             variant="sticky-yellow" 
             rotation="none" 
-            className="w-24 h-24 sm:w-[120px] sm:h-[120px] text-center border-b-2 border-r-2"
+            className="w-24 h-24 sm:w-[112px] sm:h-[112px] lg:w-[120px] lg:h-[120px] text-center border-b-2 border-r-2"
           >
             <div className="font-serif text-sm sm:text-base font-semibold leading-relaxed text-charcoal/90 animate-fade-in">
               welcome!
@@ -227,18 +272,14 @@ export const Hero: React.FC<HeroProps> = ({
 
         {/* Flower and leaf doodles attached on the collage edges */}
         <div 
-          className="absolute -top-10 -right-8 w-16 h-16 select-none pointer-events-none opacity-80 animate-float-ambient-slow"
-          style={{
-            transform: `translate(${mousePos.x * 3}px, ${mousePos.y * 3}px) rotate(45deg)`
-          }}
+          className="absolute -top-10 -right-8 w-16 h-16 select-none pointer-events-none opacity-80 animate-float-ambient-slow will-change-transform"
+          style={{ transform: "var(--hero-leaf-transform, translate3d(0, 0, 0) rotate(45deg))" }}
         >
           <Doodle src="/assets/leaf-2.svg" className="w-full h-full" color="bg-sage" />
         </div>
         <div 
-          className="absolute bottom-6 -left-10 w-12 h-12 select-none pointer-events-none animate-float-ambient"
-          style={{
-            transform: `translate(${mousePos.x * 2}px, ${mousePos.y * 2}px) rotate(-12deg)`
-          }}
+          className="absolute bottom-6 -left-10 w-12 h-12 select-none pointer-events-none animate-float-ambient will-change-transform"
+          style={{ transform: "var(--hero-strawberry-transform, translate3d(0, 0, 0) rotate(-12deg))" }}
         >
           <Doodle src="/assets/strawberry-1.svg" className="w-full h-full" color="bg-pink/80" />
         </div>
@@ -249,7 +290,7 @@ export const Hero: React.FC<HeroProps> = ({
       </div>
 
       {/* Ripped Edge Divider */}
-      <div className="col-span-full w-screen relative left-1/2 right-1/2 -translate-x-1/2 h-12 md:h-20 mt-2 md:mt-8 top-0 md:top-8 pointer-events-none select-none">
+      <div className="col-span-full w-screen relative left-1/2 right-1/2 -translate-x-1/2 h-12 md:h-20 mt-2 md:mt-8 -top-0.5 md:top-8 pointer-events-none select-none">
         <Image 
           src="/assets/bottom-ripped.png" 
           alt="Ripped paper divider"
