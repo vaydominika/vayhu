@@ -31,6 +31,7 @@ interface PaperCardProps {
   className?: string;
   lineColor?: string;
   dense?: boolean;
+  hoverable?: boolean;
 }
 
 export const PaperCard: React.FC<PaperCardProps> = ({
@@ -46,8 +47,19 @@ export const PaperCard: React.FC<PaperCardProps> = ({
   className,
   lineColor,
   dense = false,
+  hoverable = true,
 }) => {
   // Map rotation to tailwind class names and hover angles (rotating 1 additional degree)
+  const baseRotationClasses = {
+    "none": "rotate-0",
+    "rotate-1": "rotate-1",
+    "-rotate-1": "-rotate-1",
+    "rotate-2": "rotate-2",
+    "-rotate-2": "-rotate-2",
+    "rotate-3": "rotate-3",
+    "-rotate-3": "-rotate-3",
+  };
+
   const rotationClasses = {
     "none": "rotate-0 hover:rotate-1",
     "rotate-1": "rotate-1 hover:rotate-2",
@@ -148,8 +160,9 @@ export const PaperCard: React.FC<PaperCardProps> = ({
     <div
       style={inlineStyles}
       className={cn(
-        "relative transition-cozy hover:translate-y-[-6px] hover:shadow-scrapbook-lg shadow-scrapbook-md rounded-sm motion-reduce:transition-none",
-        rotationClasses[rotation],
+        "relative transition-cozy shadow-scrapbook-md rounded-sm motion-reduce:transition-none",
+        hoverable && "hover:translate-y-[-6px] hover:shadow-scrapbook-lg",
+        hoverable ? rotationClasses[rotation] : baseRotationClasses[rotation],
         resolvedVariantClasses,
         dense && "dense",
         tornBottom && "clip-torn-bottom pb-8",

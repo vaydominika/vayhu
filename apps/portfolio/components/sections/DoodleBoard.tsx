@@ -103,6 +103,24 @@ const denormalizePoint = (point: DoodleStroke["points"][number], width: number, 
   y: point.y * height,
 });
 
+const CursorMarkerBody = ({ user }: { user: DoodleCursor["user"] }) => (
+  <div className="relative h-5 w-4">
+    <div
+      className="absolute bottom-6 left-0 w-max -translate-x-1 border bg-white/95 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-charcoal shadow-scrapbook-sm"
+      style={{ borderColor: user.color }}
+    >
+      {user.name}
+    </div>
+    <div
+      className="absolute left-0 top-0 h-5 w-4 drop-shadow-sm"
+      style={{
+        backgroundColor: user.color,
+        clipPath: "polygon(0 0, 0 16px, 5px 12px, 8px 19px, 10px 18px, 7px 11px, 15px 11px)",
+      }}
+    />
+  </div>
+);
+
 const CursorMarker = ({ cursor }: { cursor: DoodleCursor }) => (
   <div
     className="pointer-events-none absolute z-20 transition-[left,top,opacity] duration-100"
@@ -112,20 +130,7 @@ const CursorMarker = ({ cursor }: { cursor: DoodleCursor }) => (
       opacity: cursor.isDrawing ? 1 : 0.82,
     }}
   >
-    <div className="-translate-x-1 -translate-y-8">
-      <div
-        className="mb-1 w-max border bg-white/95 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-charcoal shadow-scrapbook-sm"
-        style={{ borderColor: cursor.user.color }}
-      >
-        {cursor.user.name}
-      </div>
-      <div className="relative h-5 w-5">
-        <div
-          className="absolute left-0 top-0 h-0 w-0 border-y-[8px] border-l-[12px] border-y-transparent drop-shadow-sm"
-          style={{ borderLeftColor: cursor.user.color }}
-        />
-      </div>
-    </div>
+    <CursorMarkerBody user={cursor.user} />
   </div>
 );
 
@@ -703,20 +708,7 @@ export const DoodleBoard: React.FC = () => {
                   top: "0%",
                 }}
               >
-                <div className="-translate-x-1 -translate-y-8">
-                  <div
-                    className="mb-1 w-max border bg-white/95 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-charcoal shadow-scrapbook-sm"
-                    style={{ borderColor: currentUser.color }}
-                  >
-                    {currentUser.name}
-                  </div>
-                  <div className="relative h-5 w-5">
-                    <div
-                      className="absolute left-0 top-0 h-0 w-0 border-y-[8px] border-l-[12px] border-y-transparent drop-shadow-sm"
-                      style={{ borderLeftColor: currentUser.color }}
-                    />
-                  </div>
-                </div>
+                <CursorMarkerBody user={currentUser} />
               </div>
             )}
             {!hasVisibleInk && !isDrawing && (

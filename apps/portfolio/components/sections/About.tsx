@@ -42,16 +42,12 @@ const getDurationText = (start: Date, end: Date) => {
 };
 
 export const About: React.FC<AboutProps> = ({ scrollTo }) => {
-  const aboutCardRef = React.useRef<HTMLDivElement | null>(null);
-  const frameRef = React.useRef<number | null>(null);
   const [today, setToday] = React.useState<Date | null>(null);
-
-  // State to hold current hover animation class for each of the 4 sticky notes
   const [cardHovers, setCardHovers] = React.useState<{ [key: number]: string }>({
     0: "hover:rotate-6 hover:-translate-y-3 hover:scale-105",
     1: "hover:-rotate-6 hover:-translate-y-2 hover:scale-105",
     2: "hover:rotate-12 hover:-translate-y-4",
-    3: "hover:-rotate-12 hover:-translate-y-3"
+    3: "hover:-rotate-12 hover:-translate-y-3",
   });
 
   const handleCardMouseEnter = (i: number) => {
@@ -63,60 +59,19 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
       "hover:rotate-3 hover:-translate-y-4 hover:scale-110",
       "hover:-rotate-3 hover:-translate-y-2 hover:scale-110",
       "hover:rotate-1 hover:-translate-y-3 hover:scale-105",
-      "hover:-rotate-1 hover:-translate-y-4 hover:scale-103"
+      "hover:-rotate-1 hover:-translate-y-4 hover:scale-103",
     ];
     let choice = randomAnimations[Math.floor(Math.random() * randomAnimations.length)];
-    // Ensure we pick a new animation on consecutive hovers
+
     while (choice === cardHovers[i]) {
       choice = randomAnimations[Math.floor(Math.random() * randomAnimations.length)];
     }
-    setCardHovers(prev => ({ ...prev, [i]: choice }));
-  };
 
-  const setParallaxVars = (x: number, y: number) => {
-    const card = aboutCardRef.current;
-    if (!card) return;
-
-    card.style.setProperty("--about-badge-transform", `translate3d(${x * 6}px, ${y * 6}px, 0) rotate(-2.5deg)`);
-    card.style.setProperty("--about-tape-transform", `translate3d(${x * 9}px, ${y * 9}px, 0) rotate(-35deg)`);
-    card.style.setProperty("--about-card-transform", `translate3d(${x * 2}px, ${y * 2}px, 0) rotate(-1deg)`);
-  };
-
-  const queueParallaxUpdate = (x: number, y: number) => {
-    if (frameRef.current !== null) {
-      cancelAnimationFrame(frameRef.current);
-    }
-
-    frameRef.current = requestAnimationFrame(() => {
-      frameRef.current = null;
-      setParallaxVars(x, y);
-    });
-  };
-
-  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = (event.clientX - rect.left) / rect.width - 0.5;
-    const y = (event.clientY - rect.top) / rect.height - 0.5;
-
-    queueParallaxUpdate(x, y);
-  };
-
-  const handleMouseLeave = () => {
-    queueParallaxUpdate(0, 0);
+    setCardHovers((prev) => ({ ...prev, [i]: choice }));
   };
 
   React.useEffect(() => {
     setToday(new Date());
-  }, []);
-
-  React.useEffect(() => {
-    setParallaxVars(0, 0);
-
-    return () => {
-      if (frameRef.current !== null) {
-        cancelAnimationFrame(frameRef.current);
-      }
-    };
   }, []);
 
   return (
@@ -168,24 +123,18 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
             delay={0} 
             className="lg:col-span-6 relative mt-4 group/aboutcard flex flex-col h-full"
           >
-            <div
-              ref={aboutCardRef}
-              className="w-full h-full relative flex flex-col"
-              onMouseMove={handleMouseMove}
-              onMouseLeave={handleMouseLeave}
-            >
+            <div className="w-full h-full relative flex flex-col">
             
             {/* Scrapbook Tab Header using badge-3.svg */}
             <div 
-              className="absolute -top-25 left-2 w-45 h-45 z-30 select-none flex items-center justify-center transition-cozy group-hover/aboutcard:-translate-y-1 will-change-transform pointer-events-none"
-              style={{ transform: "var(--about-badge-transform, translate3d(0, 0, 0) rotate(-2.5deg))" }}
+              className="absolute -top-25 left-2 w-45 h-45 z-30 -rotate-[2.5deg] select-none flex items-center justify-center transition-[transform] duration-500 ease-in-out group-hover/aboutcard:-translate-y-1 group-hover/aboutcard:-rotate-3 will-change-transform"
             >
               <Doodle 
                 src="/assets/badge-3.svg" 
                 className="absolute inset-0 w-full h-full" 
                 color="bg-teal" 
               />
-              <span className="relative z-10 font-serif font-bold text-lg text-charcoal pt-1 flex items-center gap-1 pointer-events-auto">
+              <span className="relative z-10 font-serif font-bold text-lg text-charcoal pt-1 flex items-center gap-1">
                 About me
                 <Doodle src="/assets/heart-1.svg" className="w-3.5 h-3.5" color="bg-pink" />
               </span>
@@ -193,8 +142,7 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
 
             {/* Blue tape piece holding the tab */}
             <div 
-              className="absolute -top-10 -left-3 w-24 h-8 z-40 pointer-events-none select-none transition-cozy group-hover/aboutcard:-translate-y-2 will-change-transform"
-              style={{ transform: "var(--about-tape-transform, translate3d(0, 0, 0) rotate(-35deg))" }}
+              className="absolute -top-10 -left-3 w-24 h-8 z-40 -rotate-[35deg] pointer-events-none select-none transition-[transform] duration-500 ease-in-out group-hover/aboutcard:-translate-y-2 group-hover/aboutcard:-rotate-[37deg] will-change-transform"
             >
               <Image 
                 src="/assets/tape-1.png" 
@@ -204,11 +152,8 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
               />
             </div>
 
-            <div
-              style={{ transform: "var(--about-card-transform, translate3d(0, 0, 0) rotate(-1deg))" }}
-              className="transition-cozy flex-1 h-full will-change-transform"
-            >
-              <PaperCard variant="ruled" rotation="none" className="p-1 h-full pt-8">
+            <div className="flex-1 h-full -rotate-1 transition-[transform] duration-500 ease-in-out group-hover/aboutcard:-translate-y-1.5 group-hover/aboutcard:rotate-0 will-change-transform">
+              <PaperCard variant="ruled" rotation="none" hoverable={false} className="p-1 h-full pt-8 group-hover/aboutcard:shadow-scrapbook-lg">
                 <div className="space-y-4 font-handwriting text-2xl md:text-2xl font-bold text-charcoal/90 leading-relaxed tracking-tighter mt-4">
                   <p>
                     Hi! I'm Dominika, a full-stack developer who loves building beautiful, functional web experiences with clean, thoughtful design.
@@ -228,27 +173,27 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
 
           <ScrollRevealItem delay={150} className="lg:col-span-3 grid grid-cols-2 gap-4 h-full mt-4 items-center sm:mx-auto sm:max-w-md lg:mx-0 lg:max-w-none">
             
-            <div onMouseEnter={() => handleCardMouseEnter(0)}>
-              <PaperCard variant="sticky-pink ruled" dense={true} lineColor="#E5CBD6" rotation="rotate-2" className={cn("h-28 w-28 flex flex-col justify-center items-center text-center p-4 relative overflow-visible mx-auto sm:h-32 sm:w-32 lg:h-28 lg:w-28", cardHovers[0])}>
+            <div onMouseEnter={() => handleCardMouseEnter(0)} className={cn("transition-cozy", cardHovers[0])}>
+              <PaperCard variant="sticky-pink ruled" dense={true} lineColor="#E5CBD6" rotation="rotate-2" hoverable={false} className="h-28 w-28 flex flex-col justify-center items-center text-center p-4 relative overflow-visible mx-auto sm:h-32 sm:w-32 lg:h-28 lg:w-28">
                 <span className="text-xl md:text-2xl font-handwriting font-bold tracking-tighter leading-snug">css survivor</span>
                 <Doodle src="/assets/star-2.svg" className="absolute -top-2.5 -right-2.5 w-6 h-6 rotate-12 z-20" color="bg-pink" />
               </PaperCard>
             </div>
             
-            <div onMouseEnter={() => handleCardMouseEnter(1)}>
-              <PaperCard variant="sticky-green grid" rotation="-rotate-3" className={cn("h-30 w-30 flex flex-col justify-center items-center text-center p-4 mx-auto sm:h-34 sm:w-34 lg:h-32 lg:w-32", cardHovers[1])}>
+            <div onMouseEnter={() => handleCardMouseEnter(1)} className={cn("transition-cozy", cardHovers[1])}>
+              <PaperCard variant="sticky-green grid" rotation="-rotate-3" hoverable={false} className="h-30 w-30 flex flex-col justify-center items-center text-center p-4 mx-auto sm:h-34 sm:w-34 lg:h-32 lg:w-32">
                 <span className="text-lg md:text-xl font-handwriting font-bold tracking-tighter leading-snug">overthinking specialist</span>
               </PaperCard>
             </div>
             
-            <div onMouseEnter={() => handleCardMouseEnter(2)}>
-              <PaperCard variant="sticky-blue" pushpin={true} rotation="-rotate-1" className={cn("h-30 w-30 flex flex-col justify-center items-center text-center p-4 mx-auto sm:h-32 sm:w-32 lg:h-30 lg:w-30", cardHovers[2])}>
+            <div onMouseEnter={() => handleCardMouseEnter(2)} className={cn("transition-cozy", cardHovers[2])}>
+              <PaperCard variant="sticky-blue" pushpin={true} rotation="-rotate-1" hoverable={false} className="h-30 w-30 flex flex-col justify-center items-center text-center p-4 mx-auto sm:h-32 sm:w-32 lg:h-30 lg:w-30">
                 <span className="text-xl md:text-2xl font-handwriting font-bold tracking-tighter leading-snug">99% caffeine</span>
               </PaperCard>
             </div>
             
-            <div onMouseEnter={() => handleCardMouseEnter(3)}>
-              <PaperCard variant="sticky-yellow" tornBottom={true} rotation="rotate-2" className={cn("h-34 w-30 flex flex-col justify-center items-center text-center p-4 relative mx-auto sm:h-36 sm:w-32 lg:h-34 lg:w-30", cardHovers[3])}>
+            <div onMouseEnter={() => handleCardMouseEnter(3)} className={cn("transition-cozy", cardHovers[3])}>
+              <PaperCard variant="sticky-yellow" tornBottom={true} rotation="rotate-2" hoverable={false} className="h-34 w-30 flex flex-col justify-center items-center text-center p-4 relative mx-auto sm:h-36 sm:w-32 lg:h-34 lg:w-30">
                 <Doodle src="/assets/strawberry-2.svg" className="absolute top-2 left-2 w-6 h-6 -rotate-12 z-20" color="bg-pink" />
                 <span className="text-xl md:text-2xl font-handwriting font-bold tracking-tighter leading-snug">commit &amp; cry</span>
               </PaperCard>
