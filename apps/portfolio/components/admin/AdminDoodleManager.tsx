@@ -15,7 +15,7 @@ const drawPreview = (canvas: HTMLCanvasElement, stroke: DoodleStroke) => {
 
   const width = canvas.width;
   const height = canvas.height;
-  const [firstPoint, ...restPoints] = stroke.points;
+  const [firstPoint] = stroke.points;
 
   ctx.clearRect(0, 0, width, height);
   ctx.fillStyle = "#FFFCF6";
@@ -23,9 +23,7 @@ const drawPreview = (canvas: HTMLCanvasElement, stroke: DoodleStroke) => {
 
   if (!firstPoint) return;
 
-  const points = stroke.coordinateSpace === "normalized"
-    ? stroke.points.map((point) => ({ x: point.x * width, y: point.y * height }))
-    : normalizePixelPoints(stroke.points, width, height);
+  const points = fitPointsToPreview(stroke.points, width, height);
 
   const [firstDrawPoint, ...restDrawPoints] = points;
 
@@ -41,7 +39,7 @@ const drawPreview = (canvas: HTMLCanvasElement, stroke: DoodleStroke) => {
   ctx.beginPath();
   ctx.moveTo(firstDrawPoint.x, firstDrawPoint.y);
 
-  if (restPoints.length === 0) {
+  if (restDrawPoints.length === 0) {
     ctx.lineTo(firstDrawPoint.x + 0.1, firstDrawPoint.y + 0.1);
   } else {
     restDrawPoints.forEach((point) => ctx.lineTo(point.x, point.y));
@@ -51,20 +49,31 @@ const drawPreview = (canvas: HTMLCanvasElement, stroke: DoodleStroke) => {
   ctx.restore();
 };
 
-const normalizePixelPoints = (points: DoodleStroke["points"], width: number, height: number) => {
+const fitPointsToPreview = (points: DoodleStroke["points"], width: number, height: number) => {
   const xs = points.map((point) => point.x);
   const ys = points.map((point) => point.y);
   const minX = Math.min(...xs);
   const maxX = Math.max(...xs);
   const minY = Math.min(...ys);
   const maxY = Math.max(...ys);
-  const rangeX = Math.max(maxX - minX, 1);
-  const rangeY = Math.max(maxY - minY, 1);
-  const padding = 10;
+  const rangeX = maxX - minX;
+  const rangeY = maxY - minY;
+  const padding = 14;
+  const drawableWidth = width - padding * 2;
+  const drawableHeight = height - padding * 2;
+  const scale = Math.min(
+    rangeX > 0 ? drawableWidth / rangeX : Number.POSITIVE_INFINITY,
+    rangeY > 0 ? drawableHeight / rangeY : Number.POSITIVE_INFINITY,
+  );
+  const safeScale = Number.isFinite(scale) ? scale : 1;
+  const renderedWidth = rangeX * safeScale;
+  const renderedHeight = rangeY * safeScale;
+  const offsetX = (width - renderedWidth) / 2;
+  const offsetY = (height - renderedHeight) / 2;
 
   return points.map((point) => ({
-    x: padding + ((point.x - minX) / rangeX) * (width - padding * 2),
-    y: padding + ((point.y - minY) / rangeY) * (height - padding * 2),
+    x: offsetX + (point.x - minX) * safeScale,
+    y: offsetY + (point.y - minY) * safeScale,
   }));
 };
 
@@ -81,9 +90,9 @@ const StrokePreview = ({ stroke }: { stroke: DoodleStroke }) => {
   return (
     <canvas
       ref={canvasRef}
-      width={120}
-      height={72}
-      className="h-[72px] w-[120px] border border-charcoal/10 bg-[#FFFCF6] shadow-inner"
+      width={180}
+      height={112}
+      className="h-28 w-full max-w-[180px] border border-charcoal/15 bg-[#FFFCF6] shadow-inner"
       aria-label={`Preview of stroke ${stroke.id}`}
     />
   );
@@ -270,7 +279,7 @@ export const AdminDoodleManager: React.FC<Props> = ({ initialStrokes }) => {
         ) : (
           <div className="divide-y divide-charcoal/10">
             {filteredStrokes.map((stroke) => (
-              <div key={stroke.id} className="grid gap-4 p-4 lg:grid-cols-[140px_1fr_auto] lg:items-center">
+              <div key={stroke.id} className="grid gap-4 p-4 lg:grid-cols-[200px_1fr_auto] lg:items-center">
                 <StrokePreview stroke={stroke} />
 
                 <div className="min-w-0 space-y-2">
