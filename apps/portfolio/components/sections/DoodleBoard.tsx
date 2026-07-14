@@ -27,6 +27,11 @@ const NAME_ADJECTIVES = ["Tiny", "Sparkly", "Jelly", "Zippy", "Cosmic", "Sunny",
 const NAME_NOUNS = ["Pencil", "Comet", "Pickle", "Sticker", "Moon", "Button", "Doodle", "Pebble"];
 const CURSOR_SEND_INTERVAL = 50;
 const CURSOR_STALE_AFTER = 4500;
+const LOCAL_CURSOR_FALLBACK: DoodleUser = {
+  id: "local-cursor",
+  name: "Your doodle",
+  color: COLORS[0].value,
+};
 
 const createId = () => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -121,19 +126,6 @@ const CursorMarkerBody = ({ user }: { user: DoodleCursor["user"] }) => (
   </div>
 );
 
-const CursorMarker = ({ cursor }: { cursor: DoodleCursor }) => (
-  <div
-    className="pointer-events-none absolute z-20 transition-[left,top,opacity] duration-100"
-    style={{
-      left: `${cursor.point.x * 100}%`,
-      top: `${cursor.point.y * 100}%`,
-      opacity: cursor.isDrawing ? 1 : 0.82,
-    }}
-  >
-    <CursorMarkerBody user={cursor.user} />
-  </div>
-);
-
 const hasCanvasInk = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
   if (width === 0 || height === 0) return false;
 
@@ -180,7 +172,39 @@ const drawStroke = (
   ctx.restore();
 };
 
-const createLayer = (canvas: HTMLCanvasElement) => {
+const drawLatestStrokeSegment = (
+  ctx: CanvasRenderingContext2D,
+  stroke: DoodleStroke,
+  width: number,
+  height: number
+) => {
+  const lastPoint = stroke.points.at(-1);
+  if (!lastPoint) return;
+  const previousPoint = stroke.points.at(-2) ?? lastPoint;
+  const shouldScalePoint = stroke.coordinateSpace === "normalized";
+  const from = shouldScalePoint ? denormalizePoint(previousPoint, width, height) : previousPoint;
+  const to = shouldScalePoint ? denormalizePoint(lastPoint, width, height) : lastPoint;
+
+  ctx.save();
+  ctx.globalCompositeOperation = stroke.mode === "erase" ? "destination-out" : "source-over";
+  ctx.strokeStyle = stroke.color;
+  ctx.lineWidth = stroke.size;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  ctx.moveTo(from.x, from.y);
+  ctx.lineTo(to.x + (from.x === to.x && from.y === to.y ? 0.1 : 0), to.y + (from.x === to.x && from.y === to.y ? 0.1 : 0));
+  ctx.stroke();
+  ctx.restore();
+};
+
+type CanvasLayer = {
+  canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D;
+  hasInk: boolean;
+};
+
+const createLayer = (canvas: HTMLCanvasElement): CanvasLayer | null => {
   const layer = document.createElement("canvas");
   layer.width = canvas.width;
   layer.height = canvas.height;
@@ -191,7 +215,7 @@ const createLayer = (canvas: HTMLCanvasElement) => {
   const ratio = canvas.clientWidth > 0 ? canvas.width / canvas.clientWidth : 1;
   layerCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
 
-  return { layer, layerCtx };
+  return { canvas: layer, ctx: layerCtx, hasInk: false };
 };
 
 export const DoodleBoard: React.FC = () => {
@@ -206,6 +230,10 @@ export const DoodleBoard: React.FC = () => {
   const redrawFrameRef = useRef<number | null>(null);
   const activeStrokeRef = useRef<DoodleStroke | null>(null);
   const strokesRef = useRef<DoodleStroke[]>([]);
+  const layersRef = useRef<Map<string, CanvasLayer>>(new Map());
+  const boardRectRef = useRef<DOMRect | null>(null);
+  const remoteCursorsRef = useRef<Record<string, DoodleCursor>>({});
+  const remoteCursorElementsRef = useRef<Map<string, HTMLDivElement>>(new Map());
   const hasVisibleInkRef = useRef(false);
   const hasOwnVisibleInkRef = useRef(false);
   const [strokes, setStrokes] = useState<DoodleStroke[]>([]);
@@ -217,7 +245,7 @@ export const DoodleBoard: React.FC = () => {
   const [tool, setTool] = useState<"draw" | "erase">("draw");
   const [connectionState, setConnectionState] = useState<"local" | "connecting" | "live">("local");
   const [userCount, setUserCount] = useState(1);
-  const [remoteCursors, setRemoteCursors] = useState<Record<string, DoodleCursor>>({});
+  const [remoteCursorUsers, setRemoteCursorUsers] = useState<DoodleUser[]>([]);
   const [activeUsers, setActiveUsers] = useState<DoodleUser[]>([]);
   const localCursorRef = useRef<HTMLDivElement | null>(null);
   const [currentUser, setCurrentUser] = useState<DoodleUser | null>(null);
@@ -243,7 +271,8 @@ export const DoodleBoard: React.FC = () => {
   }, [getClientId]);
 
   useEffect(() => {
-    setCurrentUser(getCurrentUser());
+    const timeout = window.setTimeout(() => setCurrentUser(getCurrentUser()), 0);
+    return () => window.clearTimeout(timeout);
   }, [getCurrentUser]);
 
   const sendMessage = useCallback((message: object) => {
@@ -301,73 +330,139 @@ export const DoodleBoard: React.FC = () => {
     sendMessage({ type: "cursor-leave", userId: getClientId() });
   }, [getClientId, sendMessage]);
 
-  const redraw = useCallback((nextStrokes: DoodleStroke[] = strokesRef.current, updateInkState = true) => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
-
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    const layers = new Map<string, { layer: HTMLCanvasElement; layerCtx: CanvasRenderingContext2D }>();
-
-    [...nextStrokes, activeStrokeRef.current].forEach((stroke) => {
-      if (!stroke) return;
-
-      let authorLayer = layers.get(stroke.authorId);
-      if (!authorLayer) {
-        const createdLayer = createLayer(canvas);
-        if (!createdLayer) return;
-
-        authorLayer = createdLayer;
-        layers.set(stroke.authorId, authorLayer);
-      }
-
-      drawStroke(authorLayer.layerCtx, stroke, canvas.clientWidth, canvas.clientHeight);
-    });
-
-    layers.forEach(({ layer, layerCtx }, authorId) => {
-      ctx.drawImage(layer, 0, 0);
-    });
-
-    ctx.restore();
-
-    if (!updateInkState) return;
-
+  const publishInkState = useCallback(() => {
     let nextHasVisibleInk = false;
     let nextHasOwnVisibleInk = false;
 
-    layers.forEach(({ layer, layerCtx }, authorId) => {
-      const layerHasInk = hasCanvasInk(layerCtx, layer.width, layer.height);
-      nextHasVisibleInk = nextHasVisibleInk || layerHasInk;
-      nextHasOwnVisibleInk = nextHasOwnVisibleInk || (authorId === clientIdRef.current && layerHasInk);
+    layersRef.current.forEach((layer, authorId) => {
+      nextHasVisibleInk ||= layer.hasInk;
+      nextHasOwnVisibleInk ||= authorId === clientIdRef.current && layer.hasInk;
     });
 
     if (hasVisibleInkRef.current !== nextHasVisibleInk) {
       hasVisibleInkRef.current = nextHasVisibleInk;
       setHasVisibleInk(nextHasVisibleInk);
     }
-
     if (hasOwnVisibleInkRef.current !== nextHasOwnVisibleInk) {
       hasOwnVisibleInkRef.current = nextHasOwnVisibleInk;
       setHasOwnVisibleInk(nextHasOwnVisibleInk);
     }
   }, []);
 
+  const refreshLayerInk = useCallback((authorIds?: Iterable<string>) => {
+    const ids = authorIds ? Array.from(authorIds) : Array.from(layersRef.current.keys());
+    ids.forEach((authorId) => {
+      const layer = layersRef.current.get(authorId);
+      if (!layer) return;
+      layer.hasInk = hasCanvasInk(layer.ctx, layer.canvas.width, layer.canvas.height);
+    });
+    publishInkState();
+  }, [publishInkState]);
+
+  const getOrCreateLayer = useCallback((authorId: string) => {
+    const existingLayer = layersRef.current.get(authorId);
+    if (existingLayer) return existingLayer;
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    const layer = createLayer(canvas);
+    if (!layer) return null;
+    layersRef.current.set(authorId, layer);
+    return layer;
+  }, []);
+
+  const compositeLayers = useCallback(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    layersRef.current.forEach((layer) => {
+      ctx.drawImage(layer.canvas, 0, 0);
+    });
+    ctx.restore();
+  }, []);
+
+  const drawStrokeIntoCache = useCallback((stroke: DoodleStroke, latestSegmentOnly = false) => {
+    const canvas = canvasRef.current;
+    const layer = getOrCreateLayer(stroke.authorId);
+    if (!canvas || !layer) return null;
+    if (latestSegmentOnly) {
+      drawLatestStrokeSegment(layer.ctx, stroke, canvas.clientWidth, canvas.clientHeight);
+    } else {
+      drawStroke(layer.ctx, stroke, canvas.clientWidth, canvas.clientHeight);
+    }
+    if (stroke.mode === "draw") layer.hasInk = true;
+    return layer;
+  }, [getOrCreateLayer]);
+
+  const rebuildLayers = useCallback((nextStrokes: DoodleStroke[] = strokesRef.current) => {
+    layersRef.current.clear();
+    const strokesToRender = activeStrokeRef.current ? [...nextStrokes, activeStrokeRef.current] : nextStrokes;
+    strokesToRender.forEach((stroke) => drawStrokeIntoCache(stroke));
+    compositeLayers();
+    refreshLayerInk();
+  }, [compositeLayers, drawStrokeIntoCache, refreshLayerInk]);
+
+  const rebuildAuthorLayer = useCallback((authorId: string, nextStrokes: DoodleStroke[]) => {
+    layersRef.current.delete(authorId);
+    nextStrokes
+      .filter((stroke) => stroke.authorId === authorId)
+      .forEach((stroke) => drawStrokeIntoCache(stroke));
+    if (activeStrokeRef.current?.authorId === authorId) {
+      drawStrokeIntoCache(activeStrokeRef.current);
+    }
+    compositeLayers();
+    refreshLayerInk([authorId]);
+  }, [compositeLayers, drawStrokeIntoCache, refreshLayerInk]);
+
+  const storeStrokes = useCallback((nextStrokes: DoodleStroke[]) => {
+    strokesRef.current = nextStrokes;
+    setStrokes(nextStrokes);
+  }, []);
+
+  const appendStroke = useCallback((stroke: DoodleStroke, alreadyDrawn = false) => {
+    const didTrimHistory = strokesRef.current.length >= MAX_DOODLE_STROKES;
+    const nextStrokes = [...strokesRef.current, stroke].slice(-MAX_DOODLE_STROKES);
+    storeStrokes(nextStrokes);
+
+    if (didTrimHistory) {
+      rebuildLayers(nextStrokes);
+      return;
+    }
+    const layer = alreadyDrawn ? layersRef.current.get(stroke.authorId) : drawStrokeIntoCache(stroke);
+    if (stroke.mode === "draw" && layer) layer.hasInk = true;
+    compositeLayers();
+    if (stroke.mode === "erase") {
+      refreshLayerInk([stroke.authorId]);
+    } else {
+      publishInkState();
+    }
+  }, [compositeLayers, drawStrokeIntoCache, publishInkState, rebuildLayers, refreshLayerInk, storeStrokes]);
+
+  const positionRemoteCursor = useCallback((cursor: DoodleCursor) => {
+    const element = remoteCursorElementsRef.current.get(cursor.user.id);
+    const rect = boardRectRef.current;
+    if (!element || !rect) return;
+    element.style.transform = `translate3d(${cursor.point.x * rect.width}px, ${cursor.point.y * rect.height}px, 0)`;
+    element.style.opacity = cursor.isDrawing ? "1" : "0.82";
+  }, []);
+
+  const positionLocalCursor = useCallback((point: DoodleStroke["points"][number], opacity: string) => {
+    const rect = boardRectRef.current;
+    const element = localCursorRef.current;
+    if (!rect || !element) return;
+    element.style.transform = `translate3d(${point.x * rect.width}px, ${point.y * rect.height}px, 0)`;
+    element.style.opacity = opacity;
+  }, []);
+
   const scheduleLiveRedraw = useCallback(() => {
     if (redrawFrameRef.current !== null) return;
-
     redrawFrameRef.current = requestAnimationFrame(() => {
       redrawFrameRef.current = null;
-      redraw(strokesRef.current, false);
+      compositeLayers();
     });
-  }, [redraw]);
-
-  useEffect(() => {
-    strokesRef.current = strokes;
-    redraw(strokes);
-  }, [redraw, strokes]);
+  }, [compositeLayers]);
 
   useEffect(() => () => {
     if (redrawFrameRef.current !== null) {
@@ -380,29 +475,53 @@ export const DoodleBoard: React.FC = () => {
     const board = boardRef.current;
     if (!canvas || !board) return;
 
+    let boundsFrame: number | null = null;
+
+    const updateBoardBounds = () => {
+      boardRectRef.current = canvas.getBoundingClientRect();
+    };
+
+    const scheduleBoardBoundsUpdate = () => {
+      if (boundsFrame !== null) return;
+      boundsFrame = requestAnimationFrame(() => {
+        boundsFrame = null;
+        updateBoardBounds();
+      });
+    };
+
     const resizeCanvas = () => {
       const rect = board.getBoundingClientRect();
-      const ratio = window.devicePixelRatio || 1;
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      const width = Math.round(rect.width * ratio);
+      const height = Math.round(rect.height * ratio);
 
-      canvas.width = Math.round(rect.width * ratio);
-      canvas.height = Math.round(rect.height * ratio);
+      if (canvas.width === width && canvas.height === height) {
+        updateBoardBounds();
+        Object.values(remoteCursorsRef.current).forEach(positionRemoteCursor);
+        return;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
       canvas.style.width = `${rect.width}px`;
       canvas.style.height = `${rect.height}px`;
-
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-      redraw();
+      updateBoardBounds();
+      rebuildLayers();
+      Object.values(remoteCursorsRef.current).forEach(positionRemoteCursor);
     };
 
     resizeCanvas();
 
     const observer = new ResizeObserver(resizeCanvas);
     observer.observe(board);
+    window.addEventListener("scroll", scheduleBoardBoundsUpdate, { capture: true, passive: true });
 
-    return () => observer.disconnect();
-  }, [redraw]);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", scheduleBoardBoundsUpdate, true);
+      if (boundsFrame !== null) cancelAnimationFrame(boundsFrame);
+    };
+  }, [positionRemoteCursor, rebuildLayers]);
 
   useEffect(() => {
     const socketUrl = getDoodleWebSocketUrl(getClientId());
@@ -440,52 +559,63 @@ export const DoodleBoard: React.FC = () => {
       }
 
       if (message.type === "init") {
-        setStrokes(message.strokes);
+        storeStrokes(message.strokes);
+        rebuildLayers(message.strokes);
         setUserCount(message.users);
         return;
       }
 
       if (message.type === "stroke") {
-        setStrokes((currentStrokes) => [...currentStrokes, message.stroke].slice(-MAX_DOODLE_STROKES));
+        appendStroke(message.stroke);
         return;
       }
 
       if (message.type === "undo") {
-        setStrokes((currentStrokes) => currentStrokes.filter((stroke) => stroke.id !== message.strokeId));
+        const removedStroke = strokesRef.current.find((stroke) => stroke.id === message.strokeId);
+        const nextStrokes = strokesRef.current.filter((stroke) => stroke.id !== message.strokeId);
+        storeStrokes(nextStrokes);
+        if (removedStroke) rebuildAuthorLayer(removedStroke.authorId, nextStrokes);
         return;
       }
 
       if (message.type === "clear-own") {
-        setStrokes((currentStrokes) => currentStrokes.filter((stroke) => stroke.authorId !== message.authorId));
+        const nextStrokes = strokesRef.current.filter((stroke) => stroke.authorId !== message.authorId);
+        storeStrokes(nextStrokes);
+        rebuildAuthorLayer(message.authorId, nextStrokes);
         return;
       }
 
       if (message.type === "delete-stroke") {
-        setStrokes((currentStrokes) => currentStrokes.filter((stroke) => stroke.id !== message.strokeId));
+        const removedStroke = strokesRef.current.find((stroke) => stroke.id === message.strokeId);
+        const nextStrokes = strokesRef.current.filter((stroke) => stroke.id !== message.strokeId);
+        storeStrokes(nextStrokes);
+        if (removedStroke) rebuildAuthorLayer(removedStroke.authorId, nextStrokes);
         return;
       }
 
       if (message.type === "clear-all") {
-        setStrokes([]);
+        storeStrokes([]);
+        rebuildLayers([]);
         return;
       }
 
       if (message.type === "cursor") {
         if (message.cursor.user.id === clientIdRef.current) return;
 
-        setRemoteCursors((currentCursors) => ({
-          ...currentCursors,
-          [message.cursor.user.id]: message.cursor,
-        }));
+        const userId = message.cursor.user.id;
+        const isNewCursor = !remoteCursorsRef.current[userId];
+        remoteCursorsRef.current[userId] = message.cursor;
+        if (isNewCursor) {
+          setRemoteCursorUsers((currentUsers) => [...currentUsers, message.cursor.user]);
+        }
+        positionRemoteCursor(message.cursor);
         return;
       }
 
       if (message.type === "cursor-leave") {
-        setRemoteCursors((currentCursors) => {
-          const nextCursors = { ...currentCursors };
-          delete nextCursors[message.userId];
-          return nextCursors;
-        });
+        delete remoteCursorsRef.current[message.userId];
+        remoteCursorElementsRef.current.delete(message.userId);
+        setRemoteCursorUsers((currentUsers) => currentUsers.filter((user) => user.id !== message.userId));
         setActiveUsers((currentUsers) => currentUsers.filter((user) => user.id !== message.userId));
         return;
       }
@@ -501,25 +631,31 @@ export const DoodleBoard: React.FC = () => {
       socket.close();
       socketRef.current = null;
     };
-  }, [getClientId, sendCursorLeave]);
+  }, [appendStroke, getClientId, positionRemoteCursor, rebuildAuthorLayer, rebuildLayers, sendCursorLeave, storeStrokes]);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
       const now = Date.now();
 
-      setRemoteCursors((currentCursors) => {
-        const entries = Object.entries(currentCursors).filter(([, cursor]) => now - cursor.updatedAt < CURSOR_STALE_AFTER);
-        if (entries.length === Object.keys(currentCursors).length) return currentCursors;
-
-        return Object.fromEntries(entries);
+      const staleUserIds = Object.entries(remoteCursorsRef.current)
+        .filter(([, cursor]) => now - cursor.updatedAt >= CURSOR_STALE_AFTER)
+        .map(([userId]) => userId);
+      if (staleUserIds.length === 0) return;
+      staleUserIds.forEach((userId) => {
+        delete remoteCursorsRef.current[userId];
+        remoteCursorElementsRef.current.delete(userId);
       });
+      setRemoteCursorUsers((currentUsers) => currentUsers.filter((user) => !staleUserIds.includes(user.id)));
     }, 1000);
 
     return () => window.clearInterval(interval);
   }, []);
 
-  const getPoint = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
+  const getPoint = (
+    event: Pick<React.PointerEvent<HTMLCanvasElement>, "clientX" | "clientY" | "currentTarget">
+  ) => {
+    const rect = boardRectRef.current ?? event.currentTarget.getBoundingClientRect();
+    boardRectRef.current = rect;
 
     return {
       x: rect.width > 0 ? clamp((event.clientX - rect.left) / rect.width) : 0,
@@ -527,21 +663,25 @@ export const DoodleBoard: React.FC = () => {
     };
   };
 
+  const handlePointerEnter = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    boardRectRef.current = event.currentTarget.getBoundingClientRect();
+    const point = getPoint(event);
+    positionLocalCursor(point, activeStrokeRef.current ? "1" : "0.82");
+    sendCursor(point, Boolean(activeStrokeRef.current));
+  };
+
   const handlePointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
     event.currentTarget.setPointerCapture(event.pointerId);
+    boardRectRef.current = event.currentTarget.getBoundingClientRect();
     const point = getPoint(event);
     const clientId = getClientId();
     getCurrentUser();
 
-    if (localCursorRef.current) {
-      localCursorRef.current.style.left = `${point.x * 100}%`;
-      localCursorRef.current.style.top = `${point.y * 100}%`;
-      localCursorRef.current.style.opacity = "1";
-    }
+    positionLocalCursor(point, "1");
 
     sendCursor(point, true);
     setIsDrawing(true);
-    activeStrokeRef.current = {
+    const activeStroke: DoodleStroke = {
       id: createId(),
       authorId: clientId,
       coordinateSpace: "normalized",
@@ -551,23 +691,32 @@ export const DoodleBoard: React.FC = () => {
       points: [point],
       createdAt: Date.now(),
     };
+    activeStrokeRef.current = activeStroke;
+    drawStrokeIntoCache(activeStroke, true);
     scheduleLiveRedraw();
   };
 
   const handlePointerMove = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (event.pointerType === "mouse" && !activeStrokeRef.current) return;
+
     const point = getPoint(event);
 
-    if (localCursorRef.current) {
-      localCursorRef.current.style.left = `${point.x * 100}%`;
-      localCursorRef.current.style.top = `${point.y * 100}%`;
-      localCursorRef.current.style.opacity = activeStrokeRef.current ? "1" : "0.82";
-    }
+    positionLocalCursor(point, activeStrokeRef.current ? "1" : "0.82");
 
     sendCursor(point, Boolean(activeStrokeRef.current));
     if (!activeStrokeRef.current) return;
 
     activeStrokeRef.current.points.push(point);
+    drawStrokeIntoCache(activeStrokeRef.current, true);
     scheduleLiveRedraw();
+  };
+
+  const handleMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (activeStrokeRef.current) return;
+
+    const point = getPoint(event);
+    positionLocalCursor(point, "0.82");
+    sendCursor(point, false);
   };
 
   const finishStroke = (event: React.PointerEvent<HTMLCanvasElement>) => {
@@ -578,18 +727,12 @@ export const DoodleBoard: React.FC = () => {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
 
+    const endPoint = activeStroke.points.at(-1) ?? getPoint(event);
     activeStrokeRef.current = null;
     setIsDrawing(false);
-
-    const endPoint = activeStroke.points.at(-1) ?? getPoint(event);
-    if (localCursorRef.current) {
-      localCursorRef.current.style.left = `${endPoint.x * 100}%`;
-      localCursorRef.current.style.top = `${endPoint.y * 100}%`;
-      localCursorRef.current.style.opacity = "0.82";
-    }
-
+    positionLocalCursor(endPoint, "0.82");
     sendCursor(endPoint, false);
-    setStrokes((currentStrokes) => [...currentStrokes, activeStroke].slice(-MAX_DOODLE_STROKES));
+    appendStroke(activeStroke, true);
     sendMessage({ type: "stroke", stroke: activeStroke });
   };
 
@@ -606,23 +749,25 @@ export const DoodleBoard: React.FC = () => {
 
     const removedStrokeId = strokesRef.current[ownStrokeIndex].id;
 
-    setStrokes((currentStrokes) => currentStrokes.filter((stroke) => stroke.id !== removedStrokeId));
+    const nextStrokes = strokesRef.current.filter((stroke) => stroke.id !== removedStrokeId);
+    storeStrokes(nextStrokes);
+    rebuildAuthorLayer(clientIdRef.current, nextStrokes);
     sendMessage({ type: "undo", strokeId: removedStrokeId });
   };
 
   const clear = () => {
     setIsDrawing(false);
     activeStrokeRef.current = null;
-    setStrokes((currentStrokes) => currentStrokes.filter((stroke) => stroke.authorId !== clientIdRef.current));
+    const nextStrokes = strokesRef.current.filter((stroke) => stroke.authorId !== clientIdRef.current);
+    storeStrokes(nextStrokes);
+    rebuildAuthorLayer(clientIdRef.current, nextStrokes);
     sendMessage({ type: "clear-own" });
   };
 
-  const hasOwnUndoHistory = strokes.some((stroke) => stroke.authorId === clientIdRef.current);
+  const hasOwnUndoHistory = currentUser ? strokes.some((stroke) => stroke.authorId === currentUser.id) : false;
   const activePreviewSize = tool === "erase" ? Math.max(brushSize * 2, 14) : brushSize;
-  const visibleCursors = Object.values(remoteCursors);
-
   return (
-    <section id="doodle" className="relative scroll-mt-24">
+    <section className="relative">
       <Doodle
         src="/assets/spiral-2.svg"
         className="absolute -left-6 top-8 h-24 w-24 -rotate-12 opacity-15"
@@ -672,12 +817,12 @@ export const DoodleBoard: React.FC = () => {
           <Image src="/assets/tape-5.png" alt="" fill sizes="144px" className="object-contain" />
         </div>
         <Doodle
-          src="/assets/leaf-1.svg"
+          src="/assets/leaf-1-mask.png"
           className="absolute -right-5 top-1/3 h-16 w-16 rotate-12 opacity-25"
           color="bg-sage"
         />
         <Doodle
-          src="/assets/spiral-1.svg"
+          src="/assets/spiral-1-mask.png"
           className="absolute -left-4 bottom-10 h-14 w-14 -rotate-12 opacity-20"
           color="bg-teal"
         />
@@ -690,27 +835,37 @@ export const DoodleBoard: React.FC = () => {
               ref={canvasRef}
               className="block h-full w-full touch-none cursor-none"
               aria-label="Drawing canvas"
+              onPointerEnter={handlePointerEnter}
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
+              onMouseMove={handleMouseMove}
               onPointerUp={finishStroke}
               onPointerCancel={handlePointerLeaveBoard}
               onPointerLeave={handlePointerLeaveBoard}
             />
-            {visibleCursors.map((cursor) => (
-              <CursorMarker key={cursor.user.id} cursor={cursor} />
-            ))}
-            {currentUser && (
+            {remoteCursorUsers.map((user) => (
               <div
-                ref={localCursorRef}
-                className="pointer-events-none absolute z-20 opacity-0"
-                style={{
-                  left: "0%",
-                  top: "0%",
+                key={user.id}
+                ref={(element) => {
+                  if (!element) {
+                    remoteCursorElementsRef.current.delete(user.id);
+                    return;
+                  }
+                  remoteCursorElementsRef.current.set(user.id, element);
+                  const cursor = remoteCursorsRef.current[user.id];
+                  if (cursor) positionRemoteCursor(cursor);
                 }}
+                className="pointer-events-none absolute left-0 top-0 z-20 transition-[transform,opacity] duration-100"
               >
-                <CursorMarkerBody user={currentUser} />
+                <CursorMarkerBody user={user} />
               </div>
-            )}
+            ))}
+            <div
+              ref={localCursorRef}
+              className="pointer-events-none absolute left-0 top-0 z-20 opacity-0"
+            >
+              <CursorMarkerBody user={currentUser ?? LOCAL_CURSOR_FALLBACK} />
+            </div>
             {!hasVisibleInk && !isDrawing && (
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center font-handwriting text-2xl text-charcoal/25">
                 draw something tiny

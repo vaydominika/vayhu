@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import { ArrowUpRight, Mail, Send } from "lucide-react";
 import { ScrollReveal, ScrollRevealItem } from "@/components/ScrollReveal";
@@ -47,7 +49,7 @@ export const Contact: React.FC = () => {
   return (
     <section id="contact" className="relative scroll-mt-24 border-y border-charcoal/10 py-12 md:py-16">
       <Doodle src="/assets/shine-3.svg" className="absolute -right-2 top-6 h-9 w-9 rotate-12 opacity-70" color="bg-pink" />
-      <Doodle src="/assets/spiral-1.svg" className="absolute -left-8 bottom-8 h-20 w-20 -rotate-12 opacity-35 -z-10 pointer-events-none select-none" color="bg-teal" />
+      <Doodle src="/assets/spiral-1-mask.png" className="absolute -left-8 bottom-8 h-20 w-20 -rotate-12 opacity-35 -z-10 pointer-events-none select-none" color="bg-teal" />
       <Doodle src="/assets/star-7.svg" className="absolute right-[18%] -bottom-6 h-14 w-14 rotate-45 opacity-40 -z-10 pointer-events-none select-none" color="bg-sage" />
       <ScrollReveal>
         <div className="grid gap-12 md:grid-cols-12 md:gap-10 lg:gap-14">

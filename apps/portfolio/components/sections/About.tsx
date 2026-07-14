@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import Image from "next/image";
 import { UserRound } from "lucide-react";
@@ -7,7 +9,7 @@ import { Doodle } from "@/components/ui/Doodle";
 import { cn } from "@/lib/utils";
 
 interface AboutProps {
-  scrollTo: (id: string) => void;
+  todayIso: string;
 }
 
 // Helper to get random/offset deterministic hover classes for tags to prevent hydration mismatches
@@ -41,8 +43,8 @@ const getDurationText = (start: Date, end: Date) => {
   return parts.length > 0 ? parts.join(" ") : "Less than 1 month";
 };
 
-export const About: React.FC<AboutProps> = ({ scrollTo }) => {
-  const [today, setToday] = React.useState<Date | null>(null);
+export const About: React.FC<AboutProps> = ({ todayIso }) => {
+  const today = new Date(todayIso);
   const [cardHovers, setCardHovers] = React.useState<{ [key: number]: string }>({
     0: "hover:rotate-6 hover:-translate-y-3 hover:scale-105",
     1: "hover:-rotate-6 hover:-translate-y-2 hover:scale-105",
@@ -70,10 +72,6 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
     setCardHovers((prev) => ({ ...prev, [i]: choice }));
   };
 
-  React.useEffect(() => {
-    setToday(new Date());
-  }, []);
-
   return (
     <section 
       id="about" 
@@ -81,7 +79,7 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
     >
       {/* Background doodles - made significantly more visible */}
       <Doodle 
-        src="/assets/spiral-1.svg" 
+        src="/assets/spiral-1-mask.png"
         className="absolute -left-12 top-10 w-32 h-32 opacity-65 rotate-12 -z-10 pointer-events-none select-none" 
         color="bg-teal/70" 
       />
@@ -101,12 +99,12 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
         color="bg-pink" 
       />
       <Doodle
-        src="/assets/shine-1.svg"
+        src="/assets/shine-1-mask.png"
         className="absolute left-[8%] bottom-1/3 w-14 h-14 opacity-45 -rotate-12 -z-10 pointer-events-none select-none"
         color="bg-pink/70"
       />
       <Doodle
-        src="/assets/leaf-1.svg"
+        src="/assets/leaf-1-mask.png"
         className="absolute right-[7%] bottom-24 w-16 h-16 opacity-45 rotate-45 -z-10 pointer-events-none select-none"
         color="bg-sage"
       />
@@ -125,12 +123,12 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
           >
             <div className="w-full h-full relative flex flex-col">
             
-            {/* Scrapbook Tab Header using badge-3.svg */}
+            {/* Scrapbook tab header */}
             <div 
-              className="absolute -top-25 left-2 w-45 h-45 z-30 -rotate-[2.5deg] select-none flex items-center justify-center transition-[transform] duration-500 ease-in-out group-hover/aboutcard:-translate-y-1 group-hover/aboutcard:-rotate-3 will-change-transform"
+              className="absolute -top-25 left-2 w-45 h-45 z-30 -rotate-[2.5deg] select-none flex items-center justify-center transition-[transform] duration-500 ease-in-out group-hover/aboutcard:-translate-y-1 group-hover/aboutcard:-rotate-3"
             >
               <Doodle 
-                src="/assets/badge-3.svg" 
+                src="/assets/badge-3-mask.png"
                 className="absolute inset-0 w-full h-full" 
                 color="bg-teal" 
               />
@@ -142,24 +140,25 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
 
             {/* Blue tape piece holding the tab */}
             <div 
-              className="absolute -top-10 -left-3 w-24 h-8 z-40 -rotate-[35deg] pointer-events-none select-none transition-[transform] duration-500 ease-in-out group-hover/aboutcard:-translate-y-2 group-hover/aboutcard:-rotate-[37deg] will-change-transform"
+              className="absolute -top-10 -left-3 w-24 h-8 z-40 -rotate-[35deg] pointer-events-none select-none transition-[transform] duration-500 ease-in-out group-hover/aboutcard:-translate-y-2 group-hover/aboutcard:-rotate-[37deg]"
             >
               <Image 
                 src="/assets/tape-1.png" 
                 alt="Tape" 
-                fill 
+                fill
+                sizes="96px"
                 className="object-contain"
               />
             </div>
 
-            <div className="flex-1 h-full -rotate-1 transition-[transform] duration-500 ease-in-out group-hover/aboutcard:-translate-y-1.5 group-hover/aboutcard:rotate-0 will-change-transform">
+            <div className="flex-1 h-full -rotate-1 transition-[transform] duration-500 ease-in-out group-hover/aboutcard:-translate-y-1.5 group-hover/aboutcard:rotate-0">
               <PaperCard variant="ruled" rotation="none" hoverable={false} className="p-1 h-full pt-8 group-hover/aboutcard:shadow-scrapbook-lg">
                 <div className="space-y-4 font-handwriting text-2xl md:text-2xl font-bold text-charcoal/90 leading-relaxed tracking-tighter mt-4">
                   <p>
-                    Hi! I'm Dominika, a full-stack developer who loves building beautiful, functional web experiences with clean, thoughtful design.
+                    Hi! I&apos;m Dominika, a full-stack developer who loves building beautiful, functional web experiences with clean, thoughtful design.
                   </p>
                   <p>
-                    When I'm not coding, I'm usually reading, watching anime, gaming, drinking tea or an energy drink, or finding inspiration in pretty palettes, layouts, new places, and tiny design details.
+                    When I&apos;m not coding, I&apos;m usually reading, watching anime, gaming, drinking tea or an energy drink, or finding inspiration in pretty palettes, layouts, new places, and tiny design details.
                   </p>
                   <div className="pt-4 flex items-center justify-between text-xl text-charcoal/40 font-mono">
                     <span>- Domi</span>
@@ -205,10 +204,10 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
           <ScrollRevealItem id="skills" delay={300} className="lg:col-span-3 scroll-mt-24 relative mt-4 flex flex-col h-full group/skillcard">
             
             <PaperCard variant="grid" paperclip={true} paperclipPosition="top-right" rotation="rotate-1" className="h-full pt-8 relative overflow-visible">
-              {/* Scrapbook Tab Header using badge-2.svg */}
+              {/* Scrapbook tab header */}
               <div className="absolute -top-16 left-2 w-36 h-36 z-30 select-none flex items-center justify-center rotate-[2.5deg] drop-shadow-sm transition-cozy group-hover/skillcard:-translate-y-1">
                 <Doodle 
-                  src="/assets/badge-2.svg" 
+                  src="/assets/badge-2-mask.png"
                   className="absolute inset-0 w-full h-full" 
                   color="bg-sage" 
                 />
@@ -299,6 +298,7 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
                 src="/assets/tape-5.png"
                 alt="Tape"
                 fill
+                sizes="112px"
                 className="object-contain"
               />
             </div>
@@ -307,6 +307,7 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
                 src="/assets/tape-2.png"
                 alt="Tape"
                 fill
+                sizes="112px"
                 className="object-contain"
               />
             </div>
@@ -324,7 +325,7 @@ export const About: React.FC<AboutProps> = ({ scrollTo }) => {
                 {[
                   {
                     period: "March 2025 - Present",
-                    duration: today ? getDurationText(new Date(2025, 2, 1), today) : "Current",
+                    duration: getDurationText(new Date(2025, 2, 1), today),
                     title: "Full-stack Developer Intern",
                     company: "Evosoft Hungary Kft.",
                     text: "Working on full-stack development tasks and growing through real product experience."

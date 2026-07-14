@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+"use client";
+
+import React, { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { Image as ImageIcon } from "lucide-react";
@@ -87,6 +89,8 @@ const TRANSITION_ANIMATIONS = [
   "animate-paper-bounce"
 ];
 
+const subscribeToClient = () => () => {};
+
 export const Projects: React.FC = () => {
   const [lightbox, setLightbox] = useState<{ isOpen: boolean; projectIndex: number; imageIndex: number }>({
     isOpen: false,
@@ -94,29 +98,29 @@ export const Projects: React.FC = () => {
     imageIndex: 0
   });
 
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(subscribeToClient, () => true, () => false);
   const [leftColorIndex, setLeftColorIndex] = useState(0);
   const [rightColorIndex, setRightColorIndex] = useState(1);
   const [activeAnimation, setActiveAnimation] = useState("animate-paper-tear");
   const lightboxImages = projectList[lightbox.projectIndex].images;
   const hasMultipleLightboxImages = lightboxImages.length > 1;
 
-  const randomizeLeftColor = () => {
-    const nextIdx = Math.floor(Math.random() * HOVER_COLORS.length);
-    setLeftColorIndex(nextIdx);
-  };
+  const randomizeLeftColor = useCallback(() => {
+    setLeftColorIndex((currentIndex) => (currentIndex + 2) % HOVER_COLORS.length);
+  }, []);
 
-  const randomizeRightColor = () => {
-    const nextIdx = Math.floor(Math.random() * HOVER_COLORS.length);
-    setRightColorIndex(nextIdx);
-  };
+  const randomizeRightColor = useCallback(() => {
+    setRightColorIndex((currentIndex) => (currentIndex + 3) % HOVER_COLORS.length);
+  }, []);
 
-  const triggerRandomAnimation = () => {
-    const nextAnim = TRANSITION_ANIMATIONS[Math.floor(Math.random() * TRANSITION_ANIMATIONS.length)];
-    setActiveAnimation(nextAnim);
-  };
+  const triggerRandomAnimation = useCallback(() => {
+    setActiveAnimation((currentAnimation) => {
+      const currentIndex = TRANSITION_ANIMATIONS.indexOf(currentAnimation);
+      return TRANSITION_ANIMATIONS[(currentIndex + 1) % TRANSITION_ANIMATIONS.length];
+    });
+  }, []);
 
-  const showPrev = (e?: React.MouseEvent) => {
+  const showPrev = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation();
     const images = projectList[lightbox.projectIndex].images;
     if (images.length <= 1) return;
@@ -127,9 +131,9 @@ export const Projects: React.FC = () => {
     }));
     randomizeLeftColor();
     triggerRandomAnimation();
-  };
+  }, [lightbox.projectIndex, randomizeLeftColor, triggerRandomAnimation]);
 
-  const showNext = (e?: React.MouseEvent) => {
+  const showNext = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation();
     const images = projectList[lightbox.projectIndex].images;
     if (images.length <= 1) return;
@@ -140,11 +144,11 @@ export const Projects: React.FC = () => {
     }));
     randomizeRightColor();
     triggerRandomAnimation();
-  };
+  }, [lightbox.projectIndex, randomizeRightColor, triggerRandomAnimation]);
 
-  const closeLightbox = () => {
+  const closeLightbox = useCallback(() => {
     setLightbox({ isOpen: false, projectIndex: 0, imageIndex: 0 });
-  };
+  }, []);
 
   const openLightbox = (projectIndex: number) => {
     triggerRandomAnimation();
@@ -162,10 +166,6 @@ export const Projects: React.FC = () => {
   };
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
     if (!lightbox.isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (hasMultipleLightboxImages && e.key === "ArrowLeft") showPrev();
@@ -174,7 +174,7 @@ export const Projects: React.FC = () => {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [hasMultipleLightboxImages, lightbox.isOpen, lightbox.projectIndex]);
+  }, [closeLightbox, hasMultipleLightboxImages, lightbox.isOpen, showNext, showPrev]);
 
   return (
     <section id="projects" className="scroll-mt-24 relative isolate">
@@ -185,7 +185,7 @@ export const Projects: React.FC = () => {
         color="bg-pink/80" 
       />
       <Doodle 
-        src="/assets/star-9.svg" 
+        src="/assets/star-9-mask.png"
         className="absolute right-4 top-1/2 w-32 h-32 opacity-60 rotate-12 -z-10 pointer-events-none select-none" 
         color="bg-teal" 
       />
@@ -237,14 +237,15 @@ export const Projects: React.FC = () => {
                 <Image 
                   src="/assets/tape-2.png" 
                   alt="Tape" 
-                  fill 
+                  fill
+                  sizes="176px"
                   className="object-contain"
                 />
               </div>
 
               {/* Star sticker overlapping the top right of the photo frame */}
               <Doodle 
-                src="/assets/star-1.svg" 
+                  src="/assets/star-1-mask.png"
                 className="absolute top-10 right-4 w-7 h-7 rotate-12 z-20 animate-pulse" 
                 color="bg-teal" 
               />
@@ -318,8 +319,8 @@ export const Projects: React.FC = () => {
                 <div 
                   className="w-full h-full bg-pink"
                   style={{
-                    maskImage: "url(/assets/button-1.svg)",
-                    WebkitMaskImage: "url(/assets/button-1.svg)",
+                    maskImage: "url(/assets/button-1-mask.png)",
+                    WebkitMaskImage: "url(/assets/button-1-mask.png)",
                     maskSize: "contain",
                     maskRepeat: "no-repeat",
                     maskPosition: "center",
@@ -332,7 +333,8 @@ export const Projects: React.FC = () => {
                 <Image 
                   src="/assets/bottom-ripped-2.png" 
                   alt="Ripped bottom edge" 
-                  fill 
+                  fill
+                  sizes="(max-width: 1024px) 90vw, 360px"
                   className="object-cover"
                 />
               </div>
@@ -414,13 +416,14 @@ export const Projects: React.FC = () => {
                 <Image 
                   src="/assets/tape-5.png" 
                   alt="Tape" 
-                  fill 
+                  fill
+                  sizes="120px"
                   className="object-contain"
                 />
               </div>
               {/* Green leaf doodle climbing up the right side of the card inside card to lift together */}
               <Doodle 
-                src="/assets/leaf-1.svg" 
+                src="/assets/leaf-1-mask.png"
                 className="absolute top-[35%] -right-8 w-16 h-16 rotate-75 z-20 animate-float-ambient-slow select-none" 
                 color="bg-sage" 
               />
@@ -506,7 +509,8 @@ export const Projects: React.FC = () => {
               <Image 
                 src="/assets/tape-4.png" 
                 alt="Close Tape" 
-                fill 
+                fill
+                sizes="192px"
                 className="object-contain"
               />
               <span className="absolute inset-0 flex items-center justify-center text-sm font-mono font-bold text-charcoal/70 tracking-widest uppercase">CLOSE X</span>
@@ -518,9 +522,9 @@ export const Projects: React.FC = () => {
                 <Image 
                   src={projectList[lightbox.projectIndex].images[lightbox.imageIndex]} 
                   alt={projectList[lightbox.projectIndex].title} 
-                  fill 
+                  fill
+                  sizes="(max-width: 768px) 95vw, 896px"
                   className="object-contain"
-                  priority
                 />
               </div>
             </div>

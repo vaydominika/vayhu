@@ -1,4 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+"use client";
+
+import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 import { Sparkles } from "lucide-react";
 import { PaperCard } from "@/components/PaperCard";
@@ -33,60 +35,54 @@ const ArrowRightIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   </svg>
 );
 
-interface HeroProps {
-  isMounted: boolean;
-  scrollTo: (id: string) => void;
-}
-
-export const Hero: React.FC<HeroProps> = ({
-  isMounted,
-  scrollTo,
-}) => {
-  const sectionRef = useRef<HTMLElement | null>(null);
+export const Hero: React.FC = () => {
+  const collageRef = useRef<HTMLDivElement | null>(null);
   const frameRef = useRef<number | null>(null);
-  const [isCollageHovered, setIsCollageHovered] = useState(false);
+  const collageRectRef = useRef<DOMRect | null>(null);
+  const pendingPointRef = useRef({ x: 0, y: 0 });
 
   const setParallaxVars = (x: number, y: number) => {
-    const section = sectionRef.current;
-    if (!section) return;
-
-    section.style.setProperty("--hero-grid-transform", `translate3d(${x * -7}px, ${y * -7}px, 0) rotate(-6deg)`);
-    section.style.setProperty("--hero-torn-transform", `translate3d(${x * -4}px, ${y * -4}px, 0) rotate(3deg)`);
-    section.style.setProperty("--hero-card-transform", `translate3d(${x * 5}px, ${y * 5}px, 0) rotate(-1deg)`);
-    section.style.setProperty("--hero-note-transform", `translate3d(${x * 9}px, ${y * 9}px, 0) rotate(3deg)`);
-    section.style.setProperty("--hero-leaf-transform", `translate3d(${x * 3}px, ${y * 3}px, 0) rotate(45deg)`);
-    section.style.setProperty("--hero-strawberry-transform", `translate3d(${x * 2}px, ${y * 2}px, 0) rotate(-12deg)`);
+    const collage = collageRef.current;
+    if (!collage) return;
+    collage.style.setProperty("--hero-grid-transform", `translate3d(${x * -7}px, ${y * -7}px, 0) rotate(-6deg)`);
+    collage.style.setProperty("--hero-torn-transform", `translate3d(${x * -4}px, ${y * -4}px, 0) rotate(3deg)`);
+    collage.style.setProperty("--hero-card-transform", `translate3d(${x * 5}px, ${y * 5}px, 0) rotate(-1deg)`);
+    collage.style.setProperty("--hero-note-transform", `translate3d(${x * 9}px, ${y * 9}px, 0) rotate(3deg)`);
   };
 
   const queueParallaxUpdate = (x: number, y: number) => {
-    if (frameRef.current !== null) {
-      cancelAnimationFrame(frameRef.current);
-    }
-
+    pendingPointRef.current = { x, y };
+    if (frameRef.current !== null) return;
     frameRef.current = requestAnimationFrame(() => {
       frameRef.current = null;
-      setParallaxVars(x, y);
+      setParallaxVars(pendingPointRef.current.x, pendingPointRef.current.y);
     });
   };
 
-  const handleMouseMove = (event: React.MouseEvent<HTMLElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
+  const canUseParallax = () =>
+    window.matchMedia("(hover: hover) and (pointer: fine)").matches &&
+    !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const handlePointerEnter = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!canUseParallax()) return;
+    collageRectRef.current = event.currentTarget.getBoundingClientRect();
+    event.currentTarget.dataset.parallaxActive = "true";
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.currentTarget.dataset.parallaxActive !== "true") return;
+    const rect = collageRectRef.current;
+    if (!rect) return;
     const x = (event.clientX - rect.left) / rect.width - 0.5;
     const y = (event.clientY - rect.top) / rect.height - 0.5;
-
     queueParallaxUpdate(x, y);
   };
 
-  const handleMouseLeave = () => {
+  const handlePointerLeave = (event: React.PointerEvent<HTMLDivElement>) => {
+    delete event.currentTarget.dataset.parallaxActive;
+    collageRectRef.current = null;
     queueParallaxUpdate(0, 0);
   };
-
-  const collageHoverVars = {
-    "--hero-grid-hover-transform": isCollageHovered ? "translate3d(0, -8px, 0) rotate(-3deg)" : "translate3d(0, 0, 0) rotate(0deg)",
-    "--hero-torn-hover-transform": isCollageHovered ? "translate3d(0, -4px, 0) rotate(2deg)" : "translate3d(0, 0, 0) rotate(0deg)",
-    "--hero-card-hover-transform": isCollageHovered ? "translate3d(0, -12px, 0)" : "translate3d(0, 0, 0)",
-    "--hero-note-hover-transform": isCollageHovered ? "translate3d(0, -8px, 0) rotate(6deg)" : "translate3d(0, 0, 0) rotate(0deg)",
-  } as React.CSSProperties;
 
   useEffect(() => {
     setParallaxVars(0, 0);
@@ -100,48 +96,41 @@ export const Hero: React.FC<HeroProps> = ({
 
   return (
     <section
-      ref={sectionRef}
       id="hero" 
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
       className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center pt-4 md:pt-10 scroll-mt-24 relative isolate before:absolute before:-top-10 before:bottom-8 md:before:bottom-12 before:left-1/2 before:-translate-x-1/2 before:w-screen before:bg-white before:-z-10"
     >
       {/* Background doodles */}
       <Doodle 
-        src="/assets/shine-1.svg" 
+        src="/assets/shine-1-mask.png"
         className="absolute left-[10%] top-[10%] w-36 h-36 opacity-15 rotate-12 -z-20 pointer-events-none select-none" 
         color="bg-sage" 
       />
       
       {/* Hero Left Content */}
       <div className="lg:col-span-7 flex flex-col gap-6 items-start">
-        <div
-          className={`flex items-center gap-2 font-mono text-xs uppercase tracking-[0.22em] text-charcoal/45 transition-[opacity,transform] duration-800 ease-out transform ${
-            isMounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
-          }`}
-        >
+        <div className="hero-enter flex items-center gap-2 font-mono text-xs uppercase tracking-[0.22em] text-charcoal/45">
           <Sparkles className="h-3.5 w-3.5" />
           home base
         </div>
         
-        {/* Tag Badge */}
-        <div 
-          className={`inline-flex items-center gap-1.5 px-3 py-1 bg-sage/20 border border-sage/40 rounded-full text-xs font-medium text-emerald-800/80 shadow-sm transition-[opacity,transform] duration-800 ease-out transform ${
-            isMounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
-          }`}
-        >
-          <Sparkles className="w-3 h-3 animate-spin-slow" />
-          <span>welcome to my corner</span>
+        {/* Scrapbook welcome label */}
+        <div className="hero-enter inline-flex items-center gap-1.5">
+          <span className="relative grid h-7 w-8 shrink-0 translate-y-1 -rotate-6 place-items-center">
+            <Doodle
+              src="/assets/banner.svg"
+              className="absolute inset-0 h-full w-full"
+              color="bg-pink/90"
+            />
+          </span>
+          <span className="relative py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-charcoal/70 before:absolute before:-bottom-0.5 before:left-0 before:h-1 before:w-[82%] before:-rotate-1 before:bg-pink/35 before:content-['']">
+            welcome to my corner
+          </span>
         </div>
 
         {/* Title with Hand-drawn Underline */}
-        <div 
-          className={`relative transition-[opacity,transform] duration-800 ease-out delay-100 transform ${
-            isMounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
-          }`}
-        >
+        <div className="hero-enter relative" style={{ animationDelay: "100ms" }}>
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-charcoal leading-none">
-            Hi, I'm <span className="relative inline-block z-10">Domi!
+            Hi, I&apos;m <span className="relative inline-block z-10">Domi!
               <span className="absolute -bottom-2 md:-bottom-3 left-0 w-full -z-10 text-pink/50">
                 <UnderlineHighlight className="w-full h-4 md:h-6" />
               </span>
@@ -150,81 +139,65 @@ export const Hero: React.FC<HeroProps> = ({
         </div>
 
         {/* Subheading */}
-        <h2 
-          className={`text-xl md:text-2xl font-serif text-charcoal/80 font-medium italic mt-2 transition-[opacity,transform] duration-800 ease-out delay-200 transform ${
-            isMounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
-          }`}
-        >
+        <h2 className="hero-enter text-xl md:text-2xl font-serif text-charcoal/80 font-medium italic mt-2" style={{ animationDelay: "200ms" }}>
           frontend developer &amp; UI/UX enthusiast
         </h2>
 
         {/* Intro Description */}
-        <p 
-          className={`max-w-xl text-base md:text-lg text-charcoal/80 leading-relaxed font-sans mt-2 transition-[opacity,transform] duration-800 ease-out delay-300 transform ${
-            isMounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
-          }`}
-        >
+        <p className="hero-enter max-w-xl text-base md:text-lg text-charcoal/80 leading-relaxed font-sans mt-2" style={{ animationDelay: "300ms" }}>
           I create responsive, user-friendly websites with a focus on clean code, thoughtful design, and delightful user experiences.
         </p>
 
         {/* CTAs */}
-        <div 
-          className={`flex flex-wrap items-center gap-4 mt-4 transition-[opacity,transform] duration-800 ease-out delay-400 transform ${
-            isMounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
-          }`}
-        >
-          <button
-            onClick={() => scrollTo("projects")}
+        <div className="hero-enter flex flex-wrap items-center gap-4 mt-4" style={{ animationDelay: "400ms" }}>
+          <a
+            href="#projects"
             className="group inline-flex items-center gap-2 bg-sage hover:bg-sage/90 hover:-translate-y-0.5 hover:scale-105 active:scale-95 text-charcoal font-semibold px-6 py-3 rounded-none shadow-scrapbook-md hover:shadow-scrapbook-lg btn-transition text-sm border border-emerald-800/20 cursor-pointer"
           >
             <span>View my projects</span>
             <ArrowRightIcon className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-          </button>
+          </a>
           
-          <button
-            onClick={() => scrollTo("about")}
+          <a
+            href="#about"
             className="inline-flex items-center gap-2 bg-white hover:bg-pink/10 hover:-translate-y-0.5 hover:scale-105 active:scale-95 text-charcoal font-semibold px-6 py-3 rounded-none border border-pink/60 shadow-scrapbook-sm hover:shadow-scrapbook-md btn-transition text-sm cursor-pointer"
           >
             <span>About me</span>
             <Doodle src="/assets/heart-1.svg" className="w-4 h-4" color="bg-pink" />
-          </button>
+          </a>
         </div>
 
         {/* Small decorative doodles */}
-        <div 
-          className={`hidden sm:flex items-center gap-8 mt-6 text-charcoal/40 transition-[opacity,transform] duration-800 ease-out delay-500 transform ${
-            isMounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
-          }`}
-        >
+        <div className="hero-enter hidden sm:flex items-center gap-8 mt-6 text-charcoal/40" style={{ animationDelay: "500ms" }}>
           <span className="flex items-center gap-1.5 text-xs font-mono">
-            <Doodle src="/assets/leaf-1.svg" className="w-5 h-5 animate-float-ambient" color="bg-sage" /> designer mindset
+            <Doodle src="/assets/leaf-1-mask.png" className="w-5 h-5 animate-float-ambient" color="bg-sage" /> designer mindset
           </span>
           <span className="flex items-center gap-1.5 text-xs font-mono">
-            <Doodle src="/assets/star-1.svg" className="w-4 h-4 animate-float-ambient-slow" color="bg-pink" /> developer skills
+            <Doodle src="/assets/star-1-mask.png" className="w-4 h-4 animate-float-ambient-slow" color="bg-pink" /> developer skills
           </span>
         </div>
 
       </div>
 
       {/* Hero Right Collage with mouse parallax */}
-      <div 
-        className={`lg:col-span-5 relative mx-auto flex w-full max-w-[430px] justify-center items-center py-6 group/collage transition-[opacity,transform] duration-800 ease-out delay-[600ms] transform lg:max-w-none ${
-          isMounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
-        }`}
-        style={collageHoverVars}
-        onMouseEnter={() => setIsCollageHovered(true)}
-        onMouseLeave={() => setIsCollageHovered(false)}
+      <div
+        ref={collageRef}
+        className="hero-collage hero-enter lg:col-span-5 relative mx-auto flex w-full max-w-[430px] justify-center items-center py-6 group/collage lg:max-w-none"
+        style={{ animationDelay: "600ms" }}
+        onPointerEnter={handlePointerEnter}
+        onPointerMove={handlePointerMove}
+        onPointerLeave={handlePointerLeave}
       >
         
         {/* Grid Pattern Sheet behind polaroid */}
         <div 
-          className="absolute w-[80%] h-[105%] bg-white grid-lines border border-[#D5D0C2]/20 rounded-lg shadow-scrapbook-sm -z-10 transition-hero-smooth will-change-transform"
+          className="hero-parallax-layer absolute w-[80%] h-[105%] bg-white grid-lines border border-[#D5D0C2]/20 rounded-lg shadow-scrapbook-sm -z-10 transition-hero-smooth"
           style={{ transform: "var(--hero-grid-transform, translate3d(0, 0, 0) rotate(-6deg)) var(--hero-grid-hover-transform, translate3d(0, 0, 0) rotate(0deg))" }}
         ></div>
         
         {/* Torn green sheet behind */}
         <div 
-          className="absolute w-[85%] h-[98%] bg-sage/35 border border-sage/40 rounded-sm -z-20 transition-hero-smooth will-change-transform"
+          className="hero-parallax-layer absolute w-[85%] h-[98%] bg-sage/35 border border-sage/40 rounded-sm -z-20 transition-hero-smooth"
           style={{
             transform: "var(--hero-torn-transform, translate3d(0, 0, 0) rotate(3deg)) var(--hero-torn-hover-transform, translate3d(0, 0, 0) rotate(0deg))",
             clipPath: "polygon(0% 6%, 3% 8%, 6% 5%, 9% 9%, 13% 6%, 16% 8%, 20% 5%, 23% 9%, 27% 6%, 30% 8%, 34% 5%, 37% 9%, 40% 6%, 44% 8%, 48% 5%, 51% 9%, 55% 6%, 58% 8%, 62% 5%, 65% 9%, 68% 6%, 72% 8%, 76% 5%, 80% 9%, 84% 5%, 87% 9%, 90% 6%, 94% 8%, 97% 5%, 100% 8%, 100% 92%, 97% 95%, 94% 91%, 90% 94%, 87% 92%, 84% 96%, 80% 92%, 76% 95%, 72% 91%, 68% 94%, 65% 91%, 62% 95%, 58% 92%, 55% 94%, 51% 91%, 48% 95%, 44% 92%, 40% 94%, 37% 91%, 34% 95%, 30% 92%, 27% 94%, 23% 91%, 20% 95%, 16% 92%, 13% 94%, 9% 91%, 6% 95%, 3% 92%, 0% 94%)"
@@ -233,7 +206,7 @@ export const Hero: React.FC<HeroProps> = ({
         
         {/* Main Polaroid Card */}
         <div
-          className="w-[85%] sm:w-[320px] z-10 transition-hero-smooth will-change-transform"
+          className="hero-parallax-layer w-[85%] sm:w-[320px] z-10 transition-hero-smooth"
           style={{ transform: "var(--hero-card-transform, translate3d(0, 0, 0) rotate(-1deg)) var(--hero-card-hover-transform, translate3d(0, 0, 0))" }}
         >
           <PaperCard 
@@ -246,9 +219,10 @@ export const Hero: React.FC<HeroProps> = ({
               <Image 
                 src="/assets/tape-4.png" 
                 alt="Tape" 
-                fill 
+                fill
+                sizes="128px"
                 className="object-contain"
-                priority
+                loading="eager"
               />
             </div>
             <div className="relative aspect-square w-full bg-offwhite overflow-hidden rounded-xs border border-charcoal/5">
@@ -258,7 +232,7 @@ export const Hero: React.FC<HeroProps> = ({
                 fill
                 sizes="(max-width: 768px) 100vw, 320px"
                 className="object-cover grayscale-15"
-                priority
+                preload
               />
             </div>
           </PaperCard>
@@ -266,7 +240,7 @@ export const Hero: React.FC<HeroProps> = ({
 
         {/* Yellow Sticky Note layered on the bottom right corner */}
         <div
-          className="absolute bottom-3 right-0 sm:right-[2px] z-20 transition-hero-smooth will-change-transform"
+          className="hero-parallax-layer absolute bottom-3 right-0 sm:right-[2px] z-20 transition-hero-smooth"
           style={{ transform: "var(--hero-note-transform, translate3d(0, 0, 0) rotate(3deg)) var(--hero-note-hover-transform, translate3d(0, 0, 0) rotate(0deg))" }}
         >
           <PaperCard 
@@ -282,21 +256,15 @@ export const Hero: React.FC<HeroProps> = ({
         </div>
 
         {/* Flower and leaf doodles attached on the collage edges */}
-        <div 
-          className="absolute -top-10 -right-8 w-16 h-16 select-none pointer-events-none opacity-80 animate-float-ambient-slow will-change-transform"
-          style={{ transform: "var(--hero-leaf-transform, translate3d(0, 0, 0) rotate(45deg))" }}
-        >
+        <div className="absolute -top-10 -right-8 w-16 h-16 rotate-45 select-none pointer-events-none opacity-80 animate-float-ambient-slow">
           <Doodle src="/assets/leaf-2.svg" className="w-full h-full" color="bg-sage" />
         </div>
-        <div 
-          className="absolute bottom-6 -left-10 w-12 h-12 select-none pointer-events-none animate-float-ambient will-change-transform"
-          style={{ transform: "var(--hero-strawberry-transform, translate3d(0, 0, 0) rotate(-12deg))" }}
-        >
+        <div className="absolute bottom-6 -left-10 w-12 h-12 -rotate-12 select-none pointer-events-none animate-float-ambient">
           <Doodle src="/assets/strawberry-1.svg" className="w-full h-full" color="bg-pink/80" />
         </div>
         
         <Doodle src="/assets/shine-2.svg" className="absolute top-[20%] right-[-10px] w-6 h-6 animate-float-ambient" color="bg-pink/60" />
-        <Doodle src="/assets/star-5.svg" className="absolute bottom-[20%] left-[-15px] w-5 h-5 animate-float-ambient-slow" color="bg-teal/80" />
+        <Doodle src="/assets/star-5-mask.png" className="absolute bottom-[20%] left-[-15px] w-5 h-5 animate-float-ambient-slow" color="bg-teal/80" />
 
       </div>
 
@@ -306,8 +274,9 @@ export const Hero: React.FC<HeroProps> = ({
           src="/assets/bottom-ripped.png" 
           alt="Ripped paper divider"
           fill
+          sizes="100vw"
           className="object-cover object-bottom"
-          priority
+          loading="eager"
         />
       </div>
 

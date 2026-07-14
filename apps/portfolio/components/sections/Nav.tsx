@@ -1,45 +1,38 @@
+"use client";
+
 import React from "react";
 import { Menu, X } from "lucide-react";
 
-interface NavProps {
-  scrollTo: (id: string) => void;
-}
-
-export const Nav: React.FC<NavProps> = ({ scrollTo }) => {
+export const Nav: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-
-  const handleNavClick = (id: string) => {
-    scrollTo(id);
-    setIsMenuOpen(false);
-  };
 
   return (
     <>
       <header 
-        className="fixed top-0 left-0 right-0 z-50 w-full bg-offwhite/90 backdrop-blur-sm border-b border-[#E6E2D8]/50 md:border-b-0"
+        className="fixed top-0 left-0 right-0 z-50 w-full bg-offwhite/95 border-b border-[#E6E2D8]/50 md:border-b-0"
         style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
       >
         <div className="max-w-6xl mx-auto w-full h-14 px-6 flex items-center justify-between relative">
-          <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => handleNavClick("hero")}>
+          <a className="flex items-center gap-1.5 cursor-pointer" href="#hero">
             <span className="font-serif text-2xl font-bold leading-none tracking-tight text-charcoal flex items-center gap-1">
               Vay
             </span>
-          </div>
+          </a>
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-charcoal/80 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <button onClick={() => handleNavClick("hero")} className="pen-underline relative inline-flex h-9 items-center cursor-pointer transition-transform hover:-translate-y-0.5 hover:rotate-1 hover:text-sage">Home</button>
-            <button onClick={() => handleNavClick("about")} className="pen-underline relative inline-flex h-9 items-center cursor-pointer transition-transform hover:-translate-y-0.5 hover:-rotate-1 hover:text-sage">About</button>
-            <button onClick={() => handleNavClick("projects")} className="pen-underline relative inline-flex h-9 items-center cursor-pointer transition-transform hover:-translate-y-0.5 hover:-rotate-2 hover:text-sage">Projects</button>
-            <button onClick={() => handleNavClick("contact")} className="pen-underline relative inline-flex h-9 items-center cursor-pointer transition-transform hover:-translate-y-0.5 hover:rotate-1 hover:text-sage">Contact</button>
+            <a href="#hero" className="pen-underline relative inline-flex h-9 items-center cursor-pointer transition-transform hover:-translate-y-0.5 hover:rotate-1 hover:text-sage">Home</a>
+            <a href="#about" className="pen-underline relative inline-flex h-9 items-center cursor-pointer transition-transform hover:-translate-y-0.5 hover:-rotate-1 hover:text-sage">About</a>
+            <a href="#projects" className="pen-underline relative inline-flex h-9 items-center cursor-pointer transition-transform hover:-translate-y-0.5 hover:-rotate-2 hover:text-sage">Projects</a>
+            <a href="#contact" className="pen-underline relative inline-flex h-9 items-center cursor-pointer transition-transform hover:-translate-y-0.5 hover:rotate-1 hover:text-sage">Contact</a>
           </nav>
 
           <div className="flex items-center gap-4">
-            <button 
-              onClick={() => handleNavClick("contact")}
+            <a
+              href="#contact"
               className="hidden sm:inline-flex h-9 items-center justify-center px-4 border border-charcoal/30 bg-white hover:bg-sage/10 hover:-translate-y-0.5 hover:scale-105 active:scale-95 btn-transition rounded-none text-xs font-semibold tracking-wide shadow-scrapbook-sm cursor-pointer"
             >
-              Let's talk!
-            </button>
+              Let&apos;s talk!
+            </a>
             <button
               type="button"
               onClick={() => setIsMenuOpen((open) => !open)}
@@ -66,13 +59,14 @@ export const Nav: React.FC<NavProps> = ({ scrollTo }) => {
                 ["Projects", "projects"],
                 ["Contact", "contact"],
               ].map(([label, id]) => (
-                <button
+                <a
                   key={id}
-                  onClick={() => handleNavClick(id)}
+                  href={`#${id}`}
+                  onClick={() => setIsMenuOpen(false)}
                   className="text-left px-2 py-3 transition-colors hover:bg-sage/15 hover:text-sage"
                 >
                   {label}
-                </button>
+                </a>
               ))}
             </div>
           </div>

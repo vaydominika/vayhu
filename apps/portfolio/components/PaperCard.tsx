@@ -1,5 +1,4 @@
 import React from "react";
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 // PushPin inline component to avoid dependency on ScrapbookDoodles
@@ -151,9 +150,9 @@ export const PaperCard: React.FC<PaperCardProps> = ({
     );
   };
 
-  const inlineStyles: React.CSSProperties = {};
+  const inlineStyles: React.CSSProperties & { "--line-color"?: string } = {};
   if (lineColor) {
-    inlineStyles["--line-color" as any] = lineColor;
+    inlineStyles["--line-color"] = lineColor;
   }
 
   return (
